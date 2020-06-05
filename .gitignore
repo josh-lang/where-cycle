@@ -7,6 +7,7 @@ __pycache__/
 *.so
 
 # Distribution / packaging
+where-cycle-env/
 .Python
 build/
 develop-eggs/
