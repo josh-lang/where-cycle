@@ -1,5 +1,6 @@
 import boto3
 import geopandas as gpd
+import pandas as pd
 import os
 
 
@@ -23,7 +24,10 @@ lookup = converted.filter(
 )
 
 centroid = lookup.filter(['LocationID', 'geometry'], axis=1)
-centroid['geometry'] = centroid['geometry'].centroid
+centroid['latitude'] = centroid['geometry'].centroid.y
+centroid['longitude'] = centroid['geometry'].centroid.x
+centroid = centroid.drop(['geometry'], axis=1)
+centroid = pd.DataFrame(centroid)
 
 lookup.to_file('../results/taxi_zone_lookup.shp', 'ESRI Shapefile')
 s3.meta.client.upload_file(
@@ -32,7 +36,7 @@ s3.meta.client.upload_file(
     'mvp_results/taxi_zone_lookup.shp'
 )
 
-centroid.to_file('../results/taxi_zone_centroids.json', 'GeoJSON')
+centroid.to_json('../results/taxi_zone_centroids.json', orient='records')
 s3.meta.client.upload_file(
     '../results/taxi_zone_centroids.json',
     'jlang-20b-de-ny',
@@ -40,3 +44,7 @@ s3.meta.client.upload_file(
 )
 
 os.remove('./tmp/taxi_zones.zip')
+os.remove('../results/taxi_zone_lookup.cpg')
+os.remove('../results/taxi_zone_lookup.dbf')
+os.remove('../results/taxi_zone_lookup.prj')
+os.remove('../results/taxi_zone_lookup.shx')
