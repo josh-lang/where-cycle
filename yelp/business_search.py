@@ -26,6 +26,22 @@ for index, row in centroids.iterrows():
     
     businesses = businesses.append(matches, ignore_index=True)
 
+businesses = businesses\
+    .sort_values('distance')\
+    .drop_duplicates('id', keep='first')\
+    .sort_index()\
+    .filter(
+        [
+            'id',
+            'review_count',
+            'rating',
+            'coordinates',
+            'distance',
+            'LocationID'
+        ],
+        axis=1
+    )
+
 s3 = boto3.resource('s3')
 businesses.to_json('../results/yelp_businesses.json', orient='records')
 s3.meta.client.upload_file(
