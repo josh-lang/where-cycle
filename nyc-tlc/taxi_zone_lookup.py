@@ -19,8 +19,8 @@ lookup = converted.filter(
         'zone',
         'borough',
         'geometry'
-    ]
-    , axis=1
+    ],
+    axis=1
 )
 
 centroid = lookup.filter(['LocationID', 'geometry'], axis=1)
