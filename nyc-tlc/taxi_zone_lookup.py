@@ -1,8 +1,18 @@
 import boto3
 import geopandas as gpd
-import pandas as pd
 import os
+import pandas as pd
 
+
+# user = os.environ['PSQL_USER']
+# password = os.environ['PSQL_PASSWORD']
+# host = os.environ['PSQL_HOST']
+# port = os.environ['PSQL_PORT']
+# database = os.environ['PSQL_DATABASE']
+# db_string = 'postgresql://' +\
+#             user + ':' + password +\
+#             '@' + host + ':' + port + '/' + database
+# engine = create_engine(db_string)
 
 s3 = boto3.resource('s3')
 s3.meta.client.download_file(
