@@ -21,23 +21,19 @@ for index, row in centroids.iterrows():
 
     res = requests.get(url, headers=head, params=query)
     matches = res.json()['businesses']
-    for match in matches:
-        match['LocationID'] = int(row['LocationID'])
-    
     businesses = businesses.append(matches, ignore_index=True)
 
-businesses = businesses\
-    .sort_values('distance')\
-    .drop_duplicates('id', keep='first')\
-    .sort_index()\
+businesses = businesses \
+    .sort_values('distance') \
+    .drop_duplicates('id', keep='first') \
+    .sort_index() \
     .filter(
         [
             'id',
             'review_count',
             'rating',
             'coordinates',
-            'distance',
-            'LocationID'
+            'distance'
         ],
         axis=1
     )
