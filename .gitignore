@@ -1,6 +1,9 @@
+*.jar
+
 # data
 results/
 202004-citibike-tripdata.csv
+spark-warehouse/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
