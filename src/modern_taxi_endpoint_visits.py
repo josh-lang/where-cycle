@@ -1,85 +1,15 @@
-import os
-from pyspark import SparkConf, SparkContext
+from db_config import jdbc_props, jdbc_url
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import regexp_extract, input_file_name
-from pyspark.sql.types import StructType, StructField, \
-    IntegerType, TimestampType, StringType, DoubleType
+from pyspark.sql.functions import input_file_name, regexp_extract
+from taxi_schemas import \
+    fhv_15_16_schema, fhv_17_19_schema, \
+    fhv_18_schema, fhvhv_schema, \
+    green_16_19_schema, yellow_16_19_schema
 
-sc = SparkContext()
-sc.setSystemProperty('com.amazonaws.services.s3.enableV4', 'true')
 
-hadoopConf = sc._jsc.hadoopConfiguration()
-hadoopConf.set('fs.s3a.awsAccessKeyId', os.environ['AWS_ACCESS_KEY_ID'])
-hadoopConf.set('fs.s3a.awsSecretAccessKey', os.environ['AWS_SECRET_ACCESS_KEY'])
-hadoopConf.set('fs.s3a.endpoint', 's3.us-east-1.amazonaws.com')
-hadoopConf.set('com.amazonaws.services.s3a.enableV4', 'true')
-hadoopConf.set('fs.s3a.impl', 'org.apache.hadoop.fs.s3a.S3AFileSystem')
-
-spark = SparkSession(sc)
-
-fhv_15_16_schema = StructType(
-    [
-        StructField('Dispatching_base_num', StringType(), True),
-        StructField('Pickup_date', TimestampType(), True),
-        StructField('locationID', IntegerType(), True)
-    ]
-)
-
-fhv_17_19_schema = StructType(
-    [
-        StructField('Dispatching_base_num', StringType(), True),
-        StructField('Pickup_DateTime', TimestampType(), True),
-        StructField('DropOff_datetime', TimestampType(), True),
-        StructField('PUlocationID', IntegerType(), True),
-        StructField('DOlocationID', IntegerType(), True)
-    ]
-)
-
-fhv_18_schema = StructType(
-    [
-        StructField('Pickup_DateTime', TimestampType(), True),
-        StructField('DropOff_datetime', TimestampType(), True),
-        StructField('PUlocationID', IntegerType(), True),
-        StructField('DOlocationID', IntegerType(), True)
-    ]
-)
-
-fhvhv_schema = StructType(
-    [
-        StructField('hvfhs_license_num', StringType(), True),
-        StructField('dispatching_base_num', StringType(), True),
-        StructField('pickup_datetime', TimestampType(), True),
-        StructField('dropoff_datetime', TimestampType(), True),
-        StructField('PULocationID', IntegerType(), True),
-        StructField('DOLocationID', IntegerType(), True)
-    ]
-)
-
-green_16_19_schema = StructType(
-    [
-        StructField('VendorID', IntegerType(), True),
-        StructField('lpep_pickup_datetime', TimestampType(), True),
-        StructField('lpep_dropoff_datetime', TimestampType(), True),
-        StructField('store_and_fwd_flag', StringType(), True),
-        StructField('RatecodeID', IntegerType(), True),
-        StructField('PULocationID', IntegerType(), True),
-        StructField('DOLocationID', IntegerType(), True)
-    ]
-)
-
-yellow_16_19_schema = StructType(
-    [
-        StructField('VendorID', IntegerType(), True),
-        StructField('tpep_pickup_datetime', TimestampType(), True),
-        StructField('tpep_dropoff_datetime', TimestampType(), True),
-        StructField('passenger_count', IntegerType(), True),
-        StructField('trip_distance', DoubleType(), True),
-        StructField('RatecodeID', IntegerType(), True),
-        StructField('store_and_fwd_flag', StringType(), True),
-        StructField('PULocationID', IntegerType(), True),
-        StructField('DOLocationID', IntegerType(), True)
-    ]
-)
+spark = SparkSession.builder \
+    .appName('modern_taxi_endpoint_visits') \
+    .getOrCreate()
 
 fhv_15_16_df = spark.read.csv(
     path = 's3a://nyc-tlc/trip\ data/fhv_tripdata_201[56]-*.csv',
@@ -320,19 +250,11 @@ modern_writable = spark.sql('''
     ORDER BY 1, 2
 ''')
 
-jdbc_url = 'jdbc:postgresql://' + \
-    os.environ['PSQL_HOST'] + ':' + os.environ['PSQL_PORT'] + \
-    '/' + os.environ['PSQL_DATABASE']
-
 modern_writable.write.jdbc(
     url = jdbc_url,
-    table = 'modern_taxi_trips',
+    table = 'modern_taxi_endpoint_visits',
     mode = 'overwrite',
-    properties = {
-        'driver': 'org.postgresql.Driver',
-        'user': os.environ['PSQL_USER'],
-        'password': os.environ['PSQL_PASSWORD']
-    }
+    properties = jdbc_props
 )
 
 spark.stop()

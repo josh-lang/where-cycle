@@ -5,9 +5,10 @@ import os
 import pandas as pd
 from shapely.geometry.multipolygon import MultiPolygon
 from shapely.geometry.polygon import Polygon
-from sqlalchemy import *
+from sqlalchemy import Float, Integer, String
 import requests
 from time import sleep
+from db_config import py_engine
 
 s3 = boto3.resource('s3')
 s3.meta.client.download_file(
@@ -91,12 +92,6 @@ yelp_geo = gpd.GeoDataFrame(
     )
 )
 
-db_url = 'postgresql://' + \
-    os.environ['PSQL_USER'] + ':' + os.environ['PSQL_PASSWORD'] + \
-    '@' + os.environ['PSQL_HOST'] + ':' + os.environ['PSQL_PORT'] + \
-    '/' + os.environ['PSQL_DATABASE']
-engine = create_engine(db_url)
-
 def homogenize(geo):
     multi = MultiPolygon([geo]) if type(geo) == Polygon else geo
     return WKTElement(multi.wkt, srid = 4326)
@@ -104,7 +99,7 @@ taxi_zones['geometry'] = taxi_zones['geometry'].apply(homogenize)
 
 taxi_zones.to_sql(
     name = 'taxi_zones',
-    con = engine,
+    con = py_engine,
     if_exists = 'replace',
     index = False,
     index_label = 'zone_id',
@@ -132,7 +127,7 @@ yelp_writable = yelp_geo.filter(
 
 yelp_writable.to_sql(
     name = 'yelp_businesses',
-    con = engine,
+    con = py_engine,
     if_exists = 'replace',
     index = False,
     index_label = 'business_id',
