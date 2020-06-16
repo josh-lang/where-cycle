@@ -1,7 +1,7 @@
 from db_config import jdbc_props, jdbc_url
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import input_file_name, regexp_extract
-from taxi_schemas import \
+from schemas import \
     fhv_15_16_schema, fhv_17_19_schema, \
     fhv_18_schema, fhvhv_schema, \
     green_16_19_schema, yellow_16_19_schema
@@ -223,27 +223,30 @@ modern_writable = spark.sql('''
     SELECT
         month,
         zone_id,
-        CAST(SUM(trips) AS DOUBLE) / 2 AS trips
+        SUM(endpoint_visits) AS endpoint_visits
     FROM (
         SELECT
             month,
             locationID AS zone_id,
-            COUNT(*) AS trips
+            COUNT(*) AS endpoint_visits
         FROM fhv_15_16
+        WHERE locationID BETWEEN 1 AND 263
         GROUP BY 1, 2
         UNION ALL
         SELECT
             month,
             PULocationID AS zone_id,
-            COUNT(*) as trips
+            COUNT(*) as endpoint_visits
         FROM modern
+        WHERE PUlocationID BETWEEN 1 AND 263
         GROUP BY 1, 2
         UNION ALL
         SELECT
             month,
             DOLocationID AS zone_id,
-            COUNT(*) as trips
+            COUNT(*) as endpoint_visits
         FROM modern
+        WHERE DOlocationID BETWEEN 1 AND 263
         GROUP BY 1, 2
     )
     GROUP BY 1, 2
