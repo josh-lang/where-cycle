@@ -15,7 +15,7 @@ CREATE TABLE taxi_endpoint_visits AS
 		SELECT
 			month,
 			zone_id,
-			trips AS endpoint_visits
+			endpoint_visits
 		FROM modern_taxi_endpoint_visits
 	) AS t
 	GROUP BY 1, 2
