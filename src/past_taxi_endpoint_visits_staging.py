@@ -1,11 +1,11 @@
 from db_config import jdbc_props, jdbc_url
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import input_file_name, regexp_extract, round
-from taxi_schemas import green_13_16_schema, yellow_09_16_schema
+from schemas import green_13_16_schema, yellow_09_16_schema
 
 
 spark = SparkSession.builder \
-    .appName('past_taxi_endpoint_visits') \
+    .appName('past_taxi_endpoint_visits_staging') \
     .getOrCreate()
 
 green_13_16_0_df = spark.read.csv(
@@ -128,22 +128,30 @@ past_writable = spark.sql('''
         month,
         longitude,
         latitude,
-        CAST(SUM(endpoint_visits) AS DOUBLE) / 2 AS endpoint_visits
+        SUM(endpoint_visits) AS endpoint_visits
     FROM (
         SELECT
             month,
-            ROUND(pickup_longitude, 2) AS longitude,
-            ROUND(pickup_latitude, 2) AS latitude,
+            ROUND(pickup_longitude, 3) AS longitude,
+            ROUND(pickup_latitude, 3) AS latitude,
             COUNT(*) AS endpoint_visits
         FROM past
+        WHERE
+            pickup_longitude BETWEEN -74.2555913631521 AND -73.7000090639354
+            AND
+            pickup_latitude BETWEEN 40.4961153951704 AND 40.9155327770026
         GROUP BY 1, 2, 3
         UNION ALL
         SELECT
             month,
-            ROUND(dropoff_longitude, 2) AS longitude,
-            ROUND(dropoff_latitude, 2) AS latitude,
+            ROUND(dropoff_longitude, 3) AS longitude,
+            ROUND(dropoff_latitude, 3) AS latitude,
             COUNT(*) AS endpoint_visits
         FROM past
+        WHERE
+            dropoff_longitude BETWEEN -74.2555913631521 AND -73.7000090639354
+            AND
+            dropoff_latitude BETWEEN 40.4961153951704 AND 40.9155327770026
         GROUP BY 1, 2, 3
     )
     GROUP BY 1, 2, 3

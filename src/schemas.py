@@ -1,6 +1,22 @@
 from pyspark.sql.types import StructType, StructField, \
     IntegerType, TimestampType, StringType, DoubleType
 
+citibike_schema = StructType(
+    [
+        StructField('tripduration', IntegerType(), True),
+        StructField('starttime', TimestampType(), True),
+        StructField('stoptime', TimestampType(), True),
+        StructField('start station id', IntegerType(), True),
+        StructField('start station name', StringType(), True),
+        StructField('start station latitude', DoubleType(), True),
+        StructField('start station longitude', DoubleType(), True),
+        StructField('end station id', IntegerType(), True),
+        StructField('end station name', StringType(), True),
+        StructField('end station latitude', DoubleType(), True),
+        StructField('end station longitude', DoubleType(), True)
+    ]
+)
+
 green_13_16_schema = StructType(
     [
         StructField('VendorID', IntegerType(), True),
