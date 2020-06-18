@@ -46,7 +46,7 @@ centroids = pd.DataFrame.from_dict({
 })
 
 yelp = pd.DataFrame()
-for index, row in centroids.iterrows():
+for _, row in centroids.iterrows():
     query = {
         'latitude': row['latitude'],
         'longitude': row['longitude'],
