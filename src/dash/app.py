@@ -9,7 +9,6 @@ import plotly.graph_objects as go
 from sqlalchemy import create_engine
 
 
-#####     SETUP / DATA     #####
 token = os.environ['MAPBOX_ACCESS_TOKEN']
 
 py_engine = create_engine(
@@ -38,18 +37,32 @@ stats = pd.read_sql(
     con = py_engine
 )
 
-yelp_map = go.Choroplethmapbox(
-    geojson = json_zones,
-    locations = stats['zone_id'].tolist(),
-    z = stats['yelp_weighted_sum_reviews'].tolist(),
-    text = stats['zone'], 
-    # colorbar = dict(thickness = 20, ticklen = 3),
-    showscale = False
-)
+cols = [
+    'taxi_visits',
+    'citibike_visits',
+    'citibike_stations',
+    'yelp_avg_rating',
+    'yelp_sum_reviews',
+    'yelp_weighted_sum_reviews'
+]
+map_views = []
 
-fig = go.Figure()
+for col in cols:
+    map_views.append(
+        go.Choroplethmapbox(
+            geojson = json_zones,
+            locations = stats['zone_id'].tolist(),
+            z = stats[col].tolist(),
+            text = stats['zone'],
+            colorbar = dict(thickness=20, ticklen=3),
+            colorscale = 'Hot',
+            visible = False
+        )
+    )
 
-fig.add_trace(yelp_map)
+map_views[0]['visible'] = True
+
+fig = go.Figure(data = map_views)
 
 fig.update_layout(
     autosize = True,
@@ -64,6 +77,64 @@ fig.update_layout(
         zoom = 9.35
     )
 )
+
+fig.update_layout(
+    updatemenus = [
+        dict(
+            buttons = list([
+                dict(
+                    args = [
+                        'visible',
+                        [True, False, False, False, False, False]
+                    ],
+                    label = 'Taxi Visits',
+                    method = 'restyle'
+                ),
+                dict(
+                    args = [
+                        'visible',
+                        [False, True, False, False, False, False]
+                    ],
+                    label = 'Citibike Visits',
+                    method = 'restyle'
+                ),
+                dict(
+                    args = [
+                        'visible',
+                        [False, False, True, False, False, False]
+                    ],
+                    label = 'Citibike Stations',
+                    method = 'restyle'
+                ),
+                dict(
+                    args = [
+                        'visible',
+                        [False, False, False, True, False, False]
+                    ],
+                    label = 'Yelp Average Rating',
+                    method = 'restyle'
+                ),
+                dict(
+                    args = [
+                        'visible',
+                        [False, False, False, False, True, False]
+                    ],
+                    label = 'Yelp Reviews',
+                    method = 'restyle'
+                ),
+                dict(
+                    args = [
+                        'visible',
+                        [False, False, False, False, False, True]
+                    ],
+                    label = 'Yelp Weighted Reviews',
+                    method = 'restyle'
+                )
+            ]),
+        )
+    ]
+)
+
 
 stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
