@@ -53,9 +53,9 @@ for col in cols:
             geojson = json_zones,
             locations = stats['zone_id'].tolist(),
             z = stats[col].tolist(),
-            text = stats['zone'],
+            text = stats['zone_name'] + ', ' + stats['borough'],
             colorbar = dict(thickness=20, ticklen=3),
-            colorscale = 'Hot',
+            # colorscale = 'Hot',
             visible = False
         )
     )
