@@ -2,6 +2,7 @@ import io
 import os
 import requests
 import time
+import zipfile
 import boto3
 import geopandas as gpd
 import pandas as pd
