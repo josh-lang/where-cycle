@@ -4,7 +4,7 @@ from config.schemas import citibike_schema
 
 
 spark = SparkSession.builder \
-    .appName('citibike_stations_visits') \
+    .appName('where-cycle') \
     .getOrCreate()
 
 citibike_df = spark.read.csv(

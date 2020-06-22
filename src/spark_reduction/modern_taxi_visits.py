@@ -8,7 +8,7 @@ from config.schemas import \
 
 
 spark = SparkSession.builder \
-    .appName('modern_taxi_endpoint_visits') \
+    .appName('where-cycle') \
     .getOrCreate()
 
 fhv_15_16_df = spark.read.csv(
@@ -223,12 +223,12 @@ modern_writable = spark.sql('''
     SELECT
         month,
         zone_id,
-        SUM(endpoint_visits) AS endpoint_visits
+        SUM(visits) AS visits
     FROM (
         SELECT
             month,
             locationID AS zone_id,
-            COUNT(*) AS endpoint_visits
+            COUNT(*) AS visits
         FROM fhv_15_16
         WHERE locationID BETWEEN 1 AND 263
         GROUP BY 1, 2
@@ -236,7 +236,7 @@ modern_writable = spark.sql('''
         SELECT
             month,
             PULocationID AS zone_id,
-            COUNT(*) as endpoint_visits
+            COUNT(*) as visits
         FROM modern
         WHERE PUlocationID BETWEEN 1 AND 263
         GROUP BY 1, 2
@@ -244,18 +244,17 @@ modern_writable = spark.sql('''
         SELECT
             month,
             DOLocationID AS zone_id,
-            COUNT(*) as endpoint_visits
+            COUNT(*) as visits
         FROM modern
         WHERE DOlocationID BETWEEN 1 AND 263
         GROUP BY 1, 2
     )
     GROUP BY 1, 2
-    ORDER BY 1, 2
 ''')
 
 modern_writable.write.jdbc(
     url = jdbc_url,
-    table = 'modern_taxi_endpoint_visits',
+    table = 'modern_taxi_visits',
     mode = 'overwrite',
     properties = jdbc_props
 )

@@ -5,7 +5,7 @@ from config.schemas import green_13_16_schema, yellow_09_16_schema
 
 
 spark = SparkSession.builder \
-    .appName('past_taxi_endpoint_visits_staging') \
+    .appName('where-cycle') \
     .getOrCreate()
 
 green_13_16_0_df = spark.read.csv(
@@ -128,13 +128,13 @@ past_writable = spark.sql('''
         month,
         longitude,
         latitude,
-        SUM(endpoint_visits) AS endpoint_visits
+        SUM(visits) AS visits
     FROM (
         SELECT
             month,
             ROUND(pickup_longitude, 3) AS longitude,
             ROUND(pickup_latitude, 3) AS latitude,
-            COUNT(*) AS endpoint_visits
+            COUNT(*) AS visits
         FROM past
         WHERE
             pickup_longitude BETWEEN -74.2555913631521 AND -73.7000090639354
@@ -146,7 +146,7 @@ past_writable = spark.sql('''
             month,
             ROUND(dropoff_longitude, 3) AS longitude,
             ROUND(dropoff_latitude, 3) AS latitude,
-            COUNT(*) AS endpoint_visits
+            COUNT(*) AS visits
         FROM past
         WHERE
             dropoff_longitude BETWEEN -74.2555913631521 AND -73.7000090639354
@@ -155,12 +155,11 @@ past_writable = spark.sql('''
         GROUP BY 1, 2, 3
     )
     GROUP BY 1, 2, 3
-    ORDER BY 1, 2, 3
 ''')
 
 past_writable.write.jdbc(
     url = jdbc_url,
-    table = 'past_taxi_endpoint_visits_staging',
+    table = 'past_taxi_visits_staging',
     mode = 'overwrite',
     properties = jdbc_props
 )
