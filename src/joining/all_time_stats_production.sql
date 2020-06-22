@@ -18,7 +18,7 @@ CREATE TABLE all_time_stats_production AS
                 z.zone_name,
                 z.borough,
                 COALESCE(SUM(t.endpoint_visits), 0) AS taxi_visits,
-                COALESCE(SUM(c.endpoint_visits), 0) AS citibike_visits,
+                COALESCE(SUM(c.visits), 0) AS citibike_visits,
                 COALESCE(MAX(c.stations), 0) AS citibike_stations
             FROM
                 taxi_zones AS z

@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS citibike_stations_by_zone;
+DROP TABLE IF EXISTS citibike_stations;
 
-CREATE TABLE citibike_stations_by_zone AS
+CREATE TABLE citibike_stations AS
 	SELECT
 		z.zone_id,
 		c.station_id
@@ -13,5 +13,4 @@ CREATE TABLE citibike_stations_by_zone AS
 			FROM citibike_stations_staging
 		) AS c
 			ON ST_WITHIN(c.geometry, z.geometry)
-	GROUP BY 1, 2
-	ORDER BY 1, 2;
+	GROUP BY 1, 2;

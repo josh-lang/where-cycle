@@ -91,6 +91,7 @@ parso==0.7.0
 pendulum==1.4.4
 pexpect==4.8.0
 pickleshare==0.7.5
+pip-autoremove==0.9.1
 pkg-resources==0.0.0
 plotly==4.8.1
 prison==0.1.3

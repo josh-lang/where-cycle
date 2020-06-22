@@ -8,7 +8,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 citibike_df = spark.read.csv(
-    path = 's3a://jlang-20b-de-ny/citibike/*.csv',
+    path = 's3a://jlang-20b-de-ny/citibike/202005-citibike-tripdata.csv',
     schema = citibike_schema,
     header = True,
     ignoreLeadingWhiteSpace = True,
@@ -28,7 +28,7 @@ citibike_df = spark.read.csv(
         'end_id',
         'end_latitude',
         'end_longitude'
-    )
+    ).limit(100)
 
 citibike_df.createOrReplaceTempView('citibike')
 
@@ -56,28 +56,27 @@ citibike_stations = spark.sql('''
     GROUP BY 1, 2, 3
 ''')
 
-citibike_endpoint_visits = spark.sql('''
+citibike_visits = spark.sql('''
     SELECT
         month,
         station_id,
-        SUM(endpoint_visits) AS endpoint_visits
+        SUM(visits) AS visits
     FROM (
         SELECT
             start_month AS month,
             start_id AS station_id,
-            COUNT(*) AS endpoint_visits
+            COUNT(*) AS visits
         FROM citibike
         GROUP BY 1, 2
         UNION ALL
         SELECT
             end_month AS month,
             end_id AS station_id,
-            COUNT(*) AS endpoint_visits
+            COUNT(*) AS visits
         FROM citibike
         GROUP BY 1, 2
     )
     GROUP BY 1, 2
-    ORDER BY 1, 2
 ''')
 
 citibike_stations.write.jdbc(
@@ -87,9 +86,9 @@ citibike_stations.write.jdbc(
     properties = jdbc_props
 )
 
-citibike_endpoint_visits.write.jdbc(
+citibike_visits.write.jdbc(
     url = jdbc_url,
-    table = 'citibike_endpoint_visits',
+    table = 'citibike_visits',
     mode = 'overwrite',
     properties = jdbc_props
 )
