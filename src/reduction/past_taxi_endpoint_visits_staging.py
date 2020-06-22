@@ -1,7 +1,7 @@
-from db_config import jdbc_props, jdbc_url
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import input_file_name, regexp_extract, round
-from schemas import green_13_16_schema, yellow_09_16_schema
+from config.database import jdbc_props, jdbc_url
+from config.schemas import green_13_16_schema, yellow_09_16_schema
 
 
 spark = SparkSession.builder \

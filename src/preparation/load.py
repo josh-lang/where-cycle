@@ -4,8 +4,11 @@ from sqlalchemy import Float, Integer, String
 from config.database import py_engine
 
 
-def write_businesses(businesses):
+def write_businesses(**kwargs):
     '''Write Yelp business data to postgres for further processing'''
+    ti = kwargs['ti']
+    businesses = ti.xcom_pull(task_ids = 'clean_businesses')
+
     businesses.to_sql(
         name = 'yelp_businesses',
         con = py_engine,
@@ -20,9 +23,12 @@ def write_businesses(businesses):
         }
     )
 
-def write_taxi_zones(zones):
+def write_taxi_zones(**kwargs):
     '''Write taxi zone map to postgres'''
-    zones.to_sql(
+    ti = kwargs['ti']
+    taxi_zones = ti.xcom_pull(task_ids = 'clean_taxi_zones')
+
+    taxi_zones.to_sql(
         name = 'taxi_zones',
         con = py_engine,
         if_exists = 'replace',

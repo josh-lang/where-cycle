@@ -5,19 +5,25 @@ from shapely.geometry.multipolygon import MultiPolygon
 from shapely.geometry.polygon import Polygon
 
 
-def calculate_centroids(taxi_zones):
+def calculate_centroids(**kwargs):
     '''Calculate centroids for each taxi zone and extract lat-lons'''
+    ti = kwargs['ti']
+    taxi_zones = ti.xcom_pull(task_ids = 'get_taxi_zones')
+
     centroids = pd.DataFrame.from_dict({
         'latitude': taxi_zones['geometry'].centroid.y,
         'longitude': taxi_zones['geometry'].centroid.x
     })
     return centroids
 
-def clean_businesses(businesses):
+def clean_businesses(**kwargs):
     '''
     Drop invalid and duplicated businesses,
     unnest lat-lons, & combine into geometry column
     '''
+    ti = kwargs['ti']
+    businesses = ti.xcom_pull(task_ids = 'get_businesses')
+
     businesses.drop(
         businesses[businesses.distance > 3000].index,
         inplace = True
@@ -58,8 +64,10 @@ def clean_businesses(businesses):
     )
     return businesses_writable
 
-def clean_taxi_zones(zones):
+def clean_taxi_zones(**kwargs):
     '''Make geometry column consistent for writing to postgres'''
+    ti = kwargs['ti']
+    taxi_zones = ti.xcom_pull(task_ids = 'get_taxi_zones')
 
     def homogenize(geometry):
         '''
@@ -69,5 +77,5 @@ def clean_taxi_zones(zones):
         multi = MultiPolygon([geometry]) if type(geometry) == Polygon else geometry
         return WKTElement(multi.wkt, srid = 4326)
 
-    zones['geometry'] = zones['geometry'].apply(homogenize)
-    return zones
+    taxi_zones['geometry'] = taxi_zones['geometry'].apply(homogenize)
+    return taxi_zones

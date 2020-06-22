@@ -1,12 +1,6 @@
-airflow/
+# Temporary resources
 benchmark/
 dash_project_medium.py
-*.jar
-
-# data
-results/
-202004-citibike-tripdata.csv
-spark-warehouse/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -17,7 +11,6 @@ __pycache__/
 *.so
 
 # Distribution / packaging
-where-cycle-env/
 .Python
 build/
 develop-eggs/
@@ -114,6 +107,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+where-cycle-env/
 .env
 .venv
 env/

@@ -1,6 +1,6 @@
-from db_config import jdbc_props, jdbc_url
 from pyspark.sql import SparkSession
-from schemas import citibike_schema
+from config.database import jdbc_props, jdbc_url
+from config.schemas import citibike_schema
 
 
 spark = SparkSession.builder \

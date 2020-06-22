@@ -1,7 +1,7 @@
-from db_config import jdbc_props, jdbc_url
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import input_file_name, regexp_extract
-from schemas import \
+from config.database import jdbc_props, jdbc_url
+from config.schemas import \
     fhv_15_16_schema, fhv_17_19_schema, \
     fhv_18_schema, fhvhv_schema, \
     green_16_19_schema, yellow_16_19_schema
