@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from airflow import DAG
+from airflow.operators.bash_operator import BashOperator
 from airflow.operators.python_operator import PythonOperator
-# from airflow.utils.dates import days_ago
 from preparation.extract \
     import unzip_csvs, get_taxi_zones, get_businesses
 from preparation.transform \
@@ -13,13 +13,13 @@ from preparation.load \
 defaults = {
     'owner': 'airflow',
     'start_date': datetime(2020, 6, 14),
-    'depends_on_past': False
-    # 'email': ['airflow@example.com'],
-    # 'email_on_failure': False,
-    # 'email_on_retry': False,
-    # 'retries': 1,
-    # 'retry_delay': timedelta(minutes=5),
-    # 'schedule_interval: '@weekly'
+    'depends_on_past': False,
+    'email': ['josh@dats.work'],
+    'email_on_failure': True,
+    'email_on_retry': False,
+    'retries': 2,
+    'retry_delay': timedelta(minutes=5),
+    'schedule_interval': '@weekly'
 }
 with DAG('where-cycle', default_args = defaults) as dag:
     #####     PREPARATION     #####
@@ -74,3 +74,9 @@ with DAG('where-cycle', default_args = defaults) as dag:
 
     #####     REDUCTION     #####
 
+    t9 = BashOperator(
+        task_id = 'start_spark_workers',
+        bash_command = "/home/ubuntu/where-cycle/src/airflow/start_workers.sh "
+    )
+
+    

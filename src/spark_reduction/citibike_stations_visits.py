@@ -13,12 +13,12 @@ citibike_df = spark.read.csv(
     header = True,
     ignoreLeadingWhiteSpace = True,
     ignoreTrailingWhiteSpace = True
-).withColumnRenamed('start station id', 'start_id') \
-    .withColumnRenamed('start station latitude', 'start_latitude') \
+).withColumnRenamed(   'start station id',        'start_id') \
+    .withColumnRenamed('start station latitude',  'start_latitude') \
     .withColumnRenamed('start station longitude', 'start_longitude') \
-    .withColumnRenamed('end station id', 'end_id') \
-    .withColumnRenamed('end station latitude', 'end_latitude') \
-    .withColumnRenamed('end station longitude', 'end_longitude') \
+    .withColumnRenamed('end station id',          'end_id') \
+    .withColumnRenamed('end station latitude',    'end_latitude') \
+    .withColumnRenamed('end station longitude',   'end_longitude') \
     .selectExpr(
         'DATE_FORMAT(starttime, "yyyy-MM") AS start_month',
         'DATE_FORMAT(stoptime, "yyyy-MM") AS end_month',
