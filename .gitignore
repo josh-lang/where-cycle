@@ -1,6 +1,7 @@
 # Temporary resources
 benchmark/
 dash_project_medium.py
+spark-warehouse/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
