@@ -77,7 +77,9 @@ def get_businesses(**kwargs):
         response = requests.get(url, headers = head, params = query)
         json = response.json()
 
-        while 'error' in json:
+        retries = 0
+        while retries <= 10 and 'error' in json:
+            retries += 1
             time.sleep(1)
             response = requests.get(url, headers = head, params = query)
             json = response.json()

@@ -8,7 +8,7 @@ spark = SparkSession.builder \
     .appName('where-cycle') \
     .getOrCreate()
 
-def citibike_stations_staging():
+def citibike_stations():
     stations = spark.sql(f'''
         SELECT
             start_id AS station_id,
@@ -35,7 +35,7 @@ def citibike_stations_staging():
 
     stations.write.jdbc(
     url = jdbc_url,
-    table = 'citibike_stations_staging',
+    table = 'staging.citibike_stations',
     mode = 'overwrite',
     properties = jdbc_props
 )
@@ -66,7 +66,7 @@ def citibike_visits():
 
     visits.write.jdbc(
         url = jdbc_url,
-        table = 'citibike_visits',
+        table = 'staging.citibike_visits',
         mode = 'overwrite',
         properties = jdbc_props
     )

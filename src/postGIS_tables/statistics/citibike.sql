@@ -1,6 +1,6 @@
-DROP TABLE IF EXISTS citibike_stats;
+DROP TABLE IF EXISTS statistics.citibike;
 
-CREATE TABLE citibike_stats AS
+CREATE TABLE statistics.citibike AS
     SELECT
         t.month,
         t.zone_id,
@@ -16,8 +16,8 @@ CREATE TABLE citibike_stats AS
             COUNT(s.station_id) AS active_stations,
             SUM(v.visits) AS visits
         FROM
-            citibike_stations AS s
-            JOIN citibike_visits AS v
+            geo_joined.citibike_stations AS s
+            JOIN staging.citibike_visits AS v
                 USING (station_id)
         GROUP BY 1, 2
     ) AS t;

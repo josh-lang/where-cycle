@@ -254,7 +254,7 @@ modern_writable = spark.sql('''
 
 modern_writable.write.jdbc(
     url = jdbc_url,
-    table = 'modern_taxi_visits',
+    table = 'staging.modern_tlc_visits',
     mode = 'overwrite',
     properties = jdbc_props
 )

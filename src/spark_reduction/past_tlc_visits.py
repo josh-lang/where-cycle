@@ -159,7 +159,7 @@ past_writable = spark.sql('''
 
 past_writable.write.jdbc(
     url = jdbc_url,
-    table = 'past_taxi_visits_staging',
+    table = 'staging.past_tlc_visits',
     mode = 'overwrite',
     properties = jdbc_props
 )

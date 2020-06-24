@@ -1,16 +1,16 @@
-DROP TABLE IF EXISTS citibike_stations;
+DROP TABLE IF EXISTS geo_joined.citibike_stations;
 
-CREATE TABLE citibike_stations AS
+CREATE TABLE geo_joined.citibike_stations AS
 	SELECT
 		z.zone_id,
 		c.station_id
 	FROM
-		taxi_zones AS z
+		staging.taxi_zones AS z
 		JOIN (
 			SELECT
 				station_id,
 				ST_SetSRID(ST_MakePoint(longitude, latitude), 4326) AS geometry
-			FROM citibike_stations_staging
+			FROM staging.citibike_stations
 		) AS c
 			ON ST_WITHIN(c.geometry, z.geometry)
 	GROUP BY 1, 2;

@@ -12,6 +12,7 @@ def write_businesses(**kwargs):
     businesses.to_sql(
         name = 'yelp_businesses',
         con = py_engine,
+        schema = 'staging',
         if_exists = 'replace',
         index = False,
         index_label = 'business_id',
@@ -31,6 +32,7 @@ def write_taxi_zones(**kwargs):
     taxi_zones.to_sql(
         name = 'taxi_zones',
         con = py_engine,
+        schema = 'staging',
         if_exists = 'replace',
         index = False,
         index_label = 'zone_id',
