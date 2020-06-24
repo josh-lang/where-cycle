@@ -7,6 +7,7 @@ import pandas as pd
 import plotly
 import plotly.graph_objects as go
 from config.database import py_engine
+from config.geometries import TAXI_ZONE_CENTROID_LAT, TAXI_ZONE_CENTROID_LON
 
 
 token = os.environ['MAPBOX_ACCESS_TOKEN']
@@ -64,8 +65,8 @@ fig.update_layout(
         accesstoken = token,
         style = 'dark',
         center = dict(
-            lon = -73.9778002135437,
-            lat = 40.7058240860865
+            lon = TAXI_ZONE_CENTROID_LON,
+            lat = TAXI_ZONE_CENTROID_LAT
         ),
         zoom = 9.35
     )

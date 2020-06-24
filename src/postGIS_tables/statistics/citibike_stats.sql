@@ -20,5 +20,4 @@ CREATE TABLE citibike_stats AS
             JOIN citibike_visits AS v
                 USING (station_id)
         GROUP BY 1, 2
-    ) AS t
-    ORDER BY 1, 2;
+    ) AS t;

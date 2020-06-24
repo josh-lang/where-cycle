@@ -20,9 +20,11 @@
 1. [License](README.md#license)
 
 ## Purpose
-As health officials advised social distancing and businesses closed earlier this year, subway and bus ridership plummeted in many large cities including New York, which saw an almost 90% reduction by late April. Now, as cities are tentatively opening back up, people may be looking to return to their places of work and to support their favorite businesses, but they might also be hesitant to utilize public transit, instead seeking open-air alternatives.
+As health officials advised social distancing and businesses closed earlier this year, subway and bus ridership plummeted in many large cities including New York, which saw an almost 90% reduction by late April. Now, as cities are tentatively opening back up, people may be looking to return to their places of work and to support their favorite businesses, but they might be hesitant to utilize public transit, instead seeking open-air alternatives.
 
 A cursory glance at some transit coverage in NYC makes it clear that, while Citibike is an awesome open-air solution, the available stations can’t immediately meet the needs of the outer boroughs: some expansion is required. **The goal of this pipeline is to determine which NYC taxi zones may be the best candidates for Citibike expansion by aggregating historical taxi & for-hire vehicle trips, Citibike trips & station density, and Yelp business statistics.**
+
+*This project was developed by Josh Lang as part of his data engineering fellowship with Insight Data Science in the summer of 2020.*
 
 ## Pipeline
 ![Pipeline](https://github.com/josh-lang/where-cycle/blob/master/pipeline.png)

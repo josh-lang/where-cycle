@@ -10,19 +10,26 @@ from preparation.load \
     import write_businesses, write_taxi_zones
 
 
+airflow_path = '/home/ubuntu/where-cycle/src/airflow/'
+spark_str = 'cd /home/unbuntu/where-cycle/src/spark-reduction && '
+psql_str = 'psql -h $PSQL_HOST -p $PSQL_PORT -U $PSQL_USER -d ' + \
+    '$PSQL_DATABASE -f /home/ubuntu/where-cycle/src/postGIS_tables/'
+
 defaults = {
     'owner': 'airflow',
     'start_date': datetime(2020, 6, 21),
-    'depends_on_past': False,
-    'email': ['josh@dats.work'],
-    'email_on_failure': True,
-    'email_on_retry': False,
-    'retries': 2,
-    'retry_delay': timedelta(minutes=5),
-    'schedule_interval': '@weekly'
+    'depends_on_past': False
+    # 'retries': 2,
+    # 'retry_delay': timedelta(minutes=5)
 }
-with DAG('where_cycle', default_args = defaults) as dag:
-    #####     PREPARATION     #####
+
+with DAG(
+    'where_cycle',
+    default_args = defaults,
+    schedule_interval = '@weekly'
+) as dag:
+    #********    PREPARATION    ********#
+
     t1 = PythonOperator(
         task_id = 'unzip_csvs',
         python_callable = unzip_csvs
@@ -72,15 +79,49 @@ with DAG('where_cycle', default_args = defaults) as dag:
     t2 >> t3 >> t4 >> t5 >> t7
     t2 >> t6 >> t8
 
-    #####     REDUCTION     #####
 
-    # t9 = BashOperator(
-    #     task_id = 'start_spark_workers',
-    #     bash_command = "/home/ubuntu/where-cycle/src/airflow/start_workers.sh "
-    # )
+    #********    SPARK REDUCTION    ********#
 
-    # t10 = BashOperator(
-    #     task_id = 'stop_spark_workers',
-    #     bash_command = "/home/ubuntu/where-cycle/src/airflow/stop_workers.sh ",
-    #     trigger_rule = 'all_done'
-    # )
+    t9 = BashOperator(
+        task_id = 'start_spark_workers',
+        bash_command = airflow_path + 'start_workers.sh '
+    )
+
+    t10 = BashOperator(
+        task_id = 'spark-submit',
+        bash_command = spark_str + 'spark-submit test_citibike.py'
+    )
+
+    t11 = BashOperator(
+        task_id = 'stop_spark_workers',
+        bash_command = airflow_path + 'stop_workers.sh ',
+        trigger_rule = 'all_done'
+    )
+
+    t1 >> t9 >> t10 >> t11
+
+
+    #********    POSTGIS TABLES    ********#
+
+    t12 = BashOperator(
+        task_id = 'citibike_stations',
+        bash_command = psql_str + 'geometries/citibike_stations.sql'
+    )
+
+    t13 = BashOperator(
+        task_id = 'citibike_stats',
+        bash_command = psql_str + 'statistics/citibike_stats.sql'
+    )
+
+    t14 = BashOperator(
+        task_id = 'yelp_stats',
+        bash_command = psql_str + 'statistics/yelp_stats.sql'
+    )
+
+    t15 = BashOperator(
+        task_id = 'all_time_stats_production',
+        bash_command = psql_str + 'production/all_time_stats_production.sql'
+    )
+
+    t7 >> t14 >> t15
+    [t8, t10] >> t12 >> t13 >> t15

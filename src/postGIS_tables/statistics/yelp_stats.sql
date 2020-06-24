@@ -10,5 +10,4 @@ CREATE TABLE yelp_stats AS
         taxi_zones AS t
         JOIN yelp_businesses AS y
             ON ST_WITHIN(y.geometry, t.geometry)
-    GROUP BY 1
-    ORDER BY 1;
+    GROUP BY 1;
