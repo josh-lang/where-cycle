@@ -12,7 +12,7 @@ from preparation.load \
 
 defaults = {
     'owner': 'airflow',
-    'start_date': datetime(2020, 6, 14),
+    'start_date': datetime(2020, 6, 21),
     'depends_on_past': False,
     'email': ['josh@dats.work'],
     'email_on_failure': True,
@@ -21,7 +21,7 @@ defaults = {
     'retry_delay': timedelta(minutes=5),
     'schedule_interval': '@weekly'
 }
-with DAG('where-cycle', default_args = defaults) as dag:
+with DAG('where_cycle', default_args = defaults) as dag:
     #####     PREPARATION     #####
     t1 = PythonOperator(
         task_id = 'unzip_csvs',
@@ -74,9 +74,13 @@ with DAG('where-cycle', default_args = defaults) as dag:
 
     #####     REDUCTION     #####
 
-    t9 = BashOperator(
-        task_id = 'start_spark_workers',
-        bash_command = "/home/ubuntu/where-cycle/src/airflow/start_workers.sh "
-    )
+    # t9 = BashOperator(
+    #     task_id = 'start_spark_workers',
+    #     bash_command = "/home/ubuntu/where-cycle/src/airflow/start_workers.sh "
+    # )
 
-    
+    # t10 = BashOperator(
+    #     task_id = 'stop_spark_workers',
+    #     bash_command = "/home/ubuntu/where-cycle/src/airflow/stop_workers.sh ",
+    #     trigger_rule = 'all_done'
+    # )

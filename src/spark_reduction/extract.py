@@ -1,4 +1,5 @@
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import input_file_name, regexp_extract
 from config.schemas import *
 
 
@@ -49,8 +50,9 @@ def tlc_parse(path, schema):
     )
     return tlc_df
 
-def get_past_taxi_trips():
-    past_df = spark.createDataFrame()
+def get_past_tlc_trips():
+    past_df = spark.createDataFrame(data = [], schema = past_schema)
+
     green_paths = [
         's3a://nyc-tlc/trip\ data/green_tripdata_201[345]-*.csv',
         's3a://nyc-tlc/trip\ data/green_tripdata_2016-0[1-6].csv'
@@ -63,4 +65,22 @@ def get_past_taxi_trips():
             'Dropoff_longitude AS dropoff_longitude',
             'Dropoff_latitude AS dropoff_latitude'
         )
+        past_df = past_df.union(green_df)
+
+    yellow_paths = [
+        's3a://nyc-tlc/trip\ data/yellow_tripdata_2009-*.csv',
+        's3a://nyc-tlc/trip\ data/yellow_tripdata_201[0-5]-*.csv',
+        's3a://nyc-tlc/trip\ data/yellow_tripdata_2016-0[1-6].csv'
+    ]
+    for path in yellow_paths:
+        yellow_df = tlc_parse(path, yellow_09_16_schema).select(
+            'month',
+            'pickup_longitude',
+            'pickup_latitude',
+            'dropoff_longitude',
+            'dropoff_latitude'
+        )
+        past_df = past_df.union(yellow_df)
+
+    past_df.createOrReplaceTempView('past')
 

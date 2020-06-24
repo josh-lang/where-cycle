@@ -1,11 +1,16 @@
+![Python 3.6.9](https://img.shields.io/badge/python-3.6.9-blue.svg)
+![Spark 2.4.5](https://img.shields.io/badge/Spark-2.4.5-green)
+![MIT License](https://img.shields.io/badge/license-MIT-lightgrey)
 # Where Cycle
 
 *Getting New Yorkers Back to Business, Safely*
+
 
 ## Contents
 1. [Purpose](README.md#purpose)
 1. [Pipeline](README.md#pipeline)
 1. [Summary](README.md#summary)
+    - [Data](README.md#data)
     - [Preparation](README.md#preparation)
     - [Spark Reduction](README.md#spark-reduction)
     - [postGIS Tables](README.md#postgis-tables)
@@ -23,7 +28,11 @@ A cursory glance at some transit coverage in NYC makes it clear that, while Citi
 ![Pipeline](https://github.com/josh-lang/where-cycle/blob/master/pipeline.png)
 
 ## Summary
-### Perparation
+### Data
+ - Citibike Trip Histories: [S3 bucket](https://s3.console.aws.amazon.com/s3/buckets/tripdata), [documentation](https://www.citibikenyc.com/system-data)
+ - NYC Taxi & Limousine Commission Trip Records: [S3 bucket](https://s3.console.aws.amazon.com/s3/buckets/nyc-tlc), [documentation](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page)
+ - Yelp Business Search API: [documentation](https://www.yelp.com/developers/documentation/v3/business_search)
+### Preparation
 TODO
 ### Spark Reduction
 TODO
@@ -107,24 +116,5 @@ pip install -r requirements.txt
 ```
 
 ## License
-MIT License
-
+[MIT License](LICENSE)<br />
 Copyright (c) 2020 Josh Lang
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.

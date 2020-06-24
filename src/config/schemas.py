@@ -17,6 +17,16 @@ citibike_schema = StructType(
     ]
 )
 
+past_schema = StructType(
+    [
+        StructField('month', StringType(), True),
+        StructField('pickup_longitude', DoubleType(), True),
+        StructField('pickup_latitude', DoubleType(), True),
+        StructField('dropoff_longitude', DoubleType(), True),
+        StructField('dropoff_latitude', DoubleType(), True)
+    ]
+)
+
 green_13_16_schema = StructType(
     [
         StructField('VendorID', IntegerType(), True),
