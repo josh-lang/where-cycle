@@ -1,7 +1,8 @@
 from pyspark.sql import SparkSession
 from config.database import jdbc_props, jdbc_url
 from config.geometries import \
-    TAXI_ZONE_LAT_MIN, TAXI_ZONE_LAT_MAX, TAXI_ZONE_LON_MIN, TAXI_ZONE_LON_MAX
+    TAXI_ZONE_LAT_MIN, TAXI_ZONE_LAT_MAX, \
+    TAXI_ZONE_LON_MIN, TAXI_ZONE_LON_MAX
 
 
 spark = SparkSession.builder \
@@ -9,6 +10,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 def citibike_stations():
+    '''Create list of unique Citibike stations across all trip endpoints'''
     stations = spark.sql(f'''
         SELECT
             start_id AS station_id,
@@ -16,9 +18,11 @@ def citibike_stations():
             start_longitude AS longitude
         FROM citibike
         WHERE
-            start_latitude BETWEEN {TAXI_ZONE_LAT_MIN} AND {TAXI_ZONE_LAT_MAX}
+            start_latitude BETWEEN
+                {TAXI_ZONE_LAT_MIN} AND {TAXI_ZONE_LAT_MAX}
             AND
-            start_longitude BETWEEN {TAXI_ZONE_LON_MIN} AND {TAXI_ZONE_LON_MAX}
+            start_longitude BETWEEN
+                {TAXI_ZONE_LON_MIN} AND {TAXI_ZONE_LON_MAX}
         GROUP BY 1, 2, 3
         UNION
         SELECT
@@ -27,9 +31,11 @@ def citibike_stations():
             end_longitude AS longitude
         FROM citibike
         WHERE
-            end_latitude BETWEEN {TAXI_ZONE_LAT_MIN} AND {TAXI_ZONE_LAT_MAX}
+            end_latitude BETWEEN
+                {TAXI_ZONE_LAT_MIN} AND {TAXI_ZONE_LAT_MAX}
             AND
-            end_longitude BETWEEN {TAXI_ZONE_LON_MIN} AND {TAXI_ZONE_LON_MAX}
+            end_longitude BETWEEN
+                {TAXI_ZONE_LON_MIN} AND {TAXI_ZONE_LON_MAX}
         GROUP BY 1, 2, 3'''.translate({ord(c): ' ' for c in '\n\t'})
     )
 
@@ -41,6 +47,7 @@ def citibike_stations():
 )
 
 def citibike_visits():
+    '''Convert Citibike trips to visits and sum by station_id'''
     visits = spark.sql('''
         SELECT
             month,
@@ -72,6 +79,11 @@ def citibike_visits():
     )
 
 def past_tlc_visits():
+    '''
+    Convert past TLC trips to visits,
+    round lat-lon precision to street level,
+    and sum by lat-lon
+    '''
     visits = spark.sql(f'''
         SELECT
             month,
@@ -86,9 +98,11 @@ def past_tlc_visits():
                 COUNT(*) AS visits
             FROM past
             WHERE
-                pickup_longitude BETWEEN {TAXI_ZONE_LON_MIN} AND {TAXI_ZONE_LON_MAX}
+                pickup_longitude BETWEEN
+                    {TAXI_ZONE_LON_MIN} AND {TAXI_ZONE_LON_MAX}
                 AND
-                pickup_latitude BETWEEN {TAXI_ZONE_LAT_MIN} AND {TAXI_ZONE_LAT_MAX}
+                pickup_latitude BETWEEN
+                    {TAXI_ZONE_LAT_MIN} AND {TAXI_ZONE_LAT_MAX}
             GROUP BY 1, 2, 3
             UNION ALL
             SELECT
@@ -98,9 +112,11 @@ def past_tlc_visits():
                 COUNT(*) AS visits
             FROM past
             WHERE
-                dropoff_longitude BETWEEN {TAXI_ZONE_LON_MIN} AND {TAXI_ZONE_LON_MAX}
+                dropoff_longitude BETWEEN
+                    {TAXI_ZONE_LON_MIN} AND {TAXI_ZONE_LON_MAX}
                 AND
-                dropoff_latitude BETWEEN {TAXI_ZONE_LAT_MIN} AND {TAXI_ZONE_LAT_MAX}
+                dropoff_latitude BETWEEN
+                    {TAXI_ZONE_LAT_MIN} AND {TAXI_ZONE_LAT_MAX}
             GROUP BY 1, 2, 3
         )
         GROUP BY 1, 2, 3'''.translate({ord(c): ' ' for c in '\n\t'})
@@ -114,6 +130,11 @@ def past_tlc_visits():
     )
 
 def modern_tlc_visits():
+    '''
+    Convert modern TLC trips to visits,
+    ignoring unknown taxi zone IDs,
+    and sum by taxi zone ID
+    '''
     modern = spark.sql('''
         SELECT
             month,

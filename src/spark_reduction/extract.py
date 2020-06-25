@@ -8,6 +8,7 @@ spark = SparkSession.builder \
     .getOrCreate()
 
 def get_citibike_trips():
+    '''Parse Citibike CSVs, format date columns, & rename location columns'''
     citibike_df = spark.read.csv(
         path = 's3a://jlang-20b-de-ny/citibike/*.csv',
         schema = citibike_schema,
@@ -32,7 +33,8 @@ def get_citibike_trips():
     )
     citibike_df.createOrReplaceTempView('citibike')
 
-def tlc_parse(path, schema):
+def parse_tlc(path, schema):
+    '''Parse TLC CSVs, assuming trip month from filename'''
     tlc_df = spark.read.csv(
         path = path,
         schema = schema,
@@ -50,6 +52,7 @@ def tlc_parse(path, schema):
     return tlc_df
 
 def get_past_tlc_trips():
+    '''Parse TLC CSVs from before 2016-07, filtering for lat-lon columns'''
     past_df = spark.createDataFrame(data = [], schema = past_schema)
     past_pairs = [
         ('s3a://nyc-tlc/trip\ data/green_tripdata_201[345]-*.csv', green_13_16_schema),
@@ -59,7 +62,7 @@ def get_past_tlc_trips():
         ('s3a://nyc-tlc/trip\ data/yellow_tripdata_2016-0[1-6].csv', yellow_09_16_schema)
     ]
     for path, schema in past_pairs:
-        csv_df = tlc_parse(path, schema).select(
+        csv_df = parse_tlc(path, schema).select(
             'month',
             'pickup_longitude',
             'pickup_latitude',
@@ -70,7 +73,8 @@ def get_past_tlc_trips():
     past_df.createOrReplaceTempView('past')
 
 def get_modern_tlc_trips():
-    fhv_15_16_df = tlc_parse(
+    '''Parse TLC CSVs from after 2016-06, filtering for taxi zone ID columns'''
+    fhv_15_16_df = parse_tlc(
         's3a://nyc-tlc/trip\ data/fhv_tripdata_201[56]-*.csv',
         fhv_15_16_schema
     ).select(
@@ -92,7 +96,7 @@ def get_modern_tlc_trips():
         ('s3a://nyc-tlc/trip\ data/yellow_tripdata_201[789]-*.csv', yellow_16_19_schema)
     ]
     for path, schema in modern_pairs:
-        csv_df = tlc_parse(path, schema).select(
+        csv_df = parse_tlc(path, schema).select(
             'month',
             'PULocationID',
             'DOLocationID'
