@@ -27,6 +27,14 @@ past_schema = StructType(
     ]
 )
 
+modern_schema = StructType(
+    [
+        StructField('month', StringType(), True),
+        StructField('PULocationID', IntegerType(), True),
+        StructField('DOLocationID', IntegerType(), True)
+    ]
+)
+
 green_13_16_schema = StructType(
     [
         StructField('VendorID', IntegerType(), True),
@@ -34,10 +42,10 @@ green_13_16_schema = StructType(
         StructField('Lpep_dropoff_datetime', TimestampType(), True),
         StructField('Store_and_fwd_flag', StringType(), True),
         StructField('RateCodeID', IntegerType(), True),
-        StructField('Pickup_longitude', DoubleType(), True),
-        StructField('Pickup_latitude', DoubleType(), True),
-        StructField('Dropoff_longitude', DoubleType(), True),
-        StructField('Dropoff_latitude', DoubleType(), True)
+        StructField('pickup_longitude', DoubleType(), True),
+        StructField('pickup_latitude', DoubleType(), True),
+        StructField('dropoff_longitude', DoubleType(), True),
+        StructField('dropoff_latitude', DoubleType(), True)
     ]
 )
 

@@ -104,26 +104,25 @@ with DAG(
 
     #********    POSTGIS TABLES    ********#
 
-    t12 = BashOperator(
-        task_id = 'geo_joined_citibike_stations',
-        bash_command = psql_str + 'geo_joined/citibike_stations.sql'
-    )
+    # t12 = BashOperator(
+    #     task_id = 'geo_joined_citibike_stations',
+    #     bash_command = psql_str + 'geo_joined/citibike_stations.sql'
+    # )
 
-    t13 = BashOperator(
-        task_id = 'statistics_citibike',
-        bash_command = psql_str + 'statistics/citibike.sql'
-    )
+    # t13 = BashOperator(
+    #     task_id = 'statistics_citibike',
+    #     bash_command = psql_str + 'statistics/citibike.sql'
+    # )
 
     # t14 = BashOperator(
     #     task_id = 'statistics_yelp_businesses',
     #     bash_command = psql_str + 'statistics/yelp_businesses.sql'
     # )
 
-    t15 = BashOperator(
-        task_id = 'production_all_time_stats',
-        bash_command = psql_str + 'production/all_time_stats.sql'
-    )
+    # t15 = BashOperator(
+    #     task_id = 'production_all_time_stats',
+    #     bash_command = psql_str + 'production/all_time_stats.sql'
+    # )
 
     # t7 >> t14 >> t15
     # [t8, t10] >> t12 >> t13 >> t15
-    t10 >> t12 >> t13 >> t15

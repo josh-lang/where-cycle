@@ -30,7 +30,6 @@ def get_citibike_trips():
         'end_latitude',
         'end_longitude'
     )
-
     citibike_df.createOrReplaceTempView('citibike')
 
 def tlc_parse(path, schema):
@@ -52,35 +51,51 @@ def tlc_parse(path, schema):
 
 def get_past_tlc_trips():
     past_df = spark.createDataFrame(data = [], schema = past_schema)
-
-    green_paths = [
-        's3a://nyc-tlc/trip\ data/green_tripdata_201[345]-*.csv',
-        's3a://nyc-tlc/trip\ data/green_tripdata_2016-0[1-6].csv'
+    past_pairs = [
+        ('s3a://nyc-tlc/trip\ data/green_tripdata_201[345]-*.csv', green_13_16_schema),
+        ('s3a://nyc-tlc/trip\ data/green_tripdata_2016-0[1-6].csv', green_13_16_schema),
+        ('s3a://nyc-tlc/trip\ data/yellow_tripdata_2009-*.csv', yellow_09_16_schema),
+        ('s3a://nyc-tlc/trip\ data/yellow_tripdata_201[0-5]-*.csv', yellow_09_16_schema),
+        ('s3a://nyc-tlc/trip\ data/yellow_tripdata_2016-0[1-6].csv', yellow_09_16_schema)
     ]
-    for path in green_paths:
-        green_df = tlc_parse(path, green_13_16_schema).selectExpr(
-            'month',
-            'Pickup_longitude AS pickup_longitude',
-            'Pickup_latitude AS pickup_latitude',
-            'Dropoff_longitude AS dropoff_longitude',
-            'Dropoff_latitude AS dropoff_latitude'
-        )
-        past_df = past_df.union(green_df)
-
-    yellow_paths = [
-        's3a://nyc-tlc/trip\ data/yellow_tripdata_2009-*.csv',
-        's3a://nyc-tlc/trip\ data/yellow_tripdata_201[0-5]-*.csv',
-        's3a://nyc-tlc/trip\ data/yellow_tripdata_2016-0[1-6].csv'
-    ]
-    for path in yellow_paths:
-        yellow_df = tlc_parse(path, yellow_09_16_schema).select(
+    for path, schema in past_pairs:
+        csv_df = tlc_parse(path, schema).select(
             'month',
             'pickup_longitude',
             'pickup_latitude',
             'dropoff_longitude',
             'dropoff_latitude'
         )
-        past_df = past_df.union(yellow_df)
-
+        past_df = past_df.union(csv_df)
     past_df.createOrReplaceTempView('past')
 
+def get_modern_tlc_trips():
+    fhv_15_16_df = tlc_parse(
+        's3a://nyc-tlc/trip\ data/fhv_tripdata_201[56]-*.csv',
+        fhv_15_16_schema
+    ).select(
+        'month',
+        'locationID'
+    )
+    fhv_15_16_df.createOrReplaceTempView('fhv_15_16')
+
+    modern_df = spark.createDataFrame(data = [], schema = modern_schema)
+    modern_pairs = [
+        ('s3a://nyc-tlc/trip\ data/fhv_tripdata_201[79]-*.csv', fhv_17_19_schema),
+        ('s3a://nyc-tlc/trip\ data/fhv_tripdata_2018-*.csv', fhv_18_schema),
+        ('s3a://nyc-tlc/trip\ data/fhvhv_tripdata_*.csv', fhvhv_schema),
+        ('s3a://nyc-tlc/trip\ data/green_tripdata_2016-0[789].csv', green_16_19_schema),
+        ('s3a://nyc-tlc/trip\ data/green_tripdata_2016-1*.csv', green_16_19_schema),
+        ('s3a://nyc-tlc/trip\ data/green_tripdata_201[789]-*.csv', green_16_19_schema),
+        ('s3a://nyc-tlc/trip\ data/yellow_tripdata_2016-0[789].csv', yellow_16_19_schema),
+        ('s3a://nyc-tlc/trip\ data/yellow_tripdata_2016-1*.csv', yellow_16_19_schema),
+        ('s3a://nyc-tlc/trip\ data/yellow_tripdata_201[789]-*.csv', yellow_16_19_schema)
+    ]
+    for path, schema in modern_pairs:
+        csv_df = tlc_parse(path, schema).select(
+            'month',
+            'PULocationID',
+            'DOLocationID'
+        )
+        modern_df = modern_df.union(csv_df)
+    modern_df.createOrReplaceTempView('modern')
