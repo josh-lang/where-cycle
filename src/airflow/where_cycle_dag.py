@@ -19,8 +19,8 @@ defaults = {
     'owner': 'airflow',
     'start_date': datetime(2020, 6, 21),
     'depends_on_past': False
-    'retries': 2,
-    'retry_delay': timedelta(minutes=5)
+    # 'retries': 2,
+    # 'retry_delay': timedelta(minutes=5)
 }
 
 with DAG(
@@ -104,13 +104,13 @@ with DAG(
     #********    POSTGIS TABLES    ********#
 
     t12 = BashOperator(
-        task_id = 'create_statistics_yelp_businesses',
-        bash_command = psql_str + 'statistics/yelp_businesses.sql'
-    )
-
-    t13 = BashOperator(
         task_id = 'create_production_taxi_zones',
         bash_command = psql_str + 'production/taxi_zones.sql'
+    )
+    
+    t13 = BashOperator(
+        task_id = 'create_statistics_yelp_businesses',
+        bash_command = psql_str + 'statistics/yelp_businesses.sql'
     )
 
     t14 = BashOperator(
@@ -138,8 +138,8 @@ with DAG(
         bash_command = psql_str + 'production/all_time_stats.sql'
     )
 
-    t7 >> t12
-    t3 >> t13
+    t3 >> t12
+    t7 >> t13
     t10 >> t14 >> t15
     t10 >> t16 >> t17
-    [t12, t15, t17] >> t18
+    [t13, t15, t17] >> t18

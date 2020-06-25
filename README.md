@@ -1,19 +1,22 @@
-![Python 3.6.9](https://img.shields.io/badge/python-3.6.9-blue.svg)
-![Spark 2.4.5](https://img.shields.io/badge/Spark-2.4.5-green)
+![Python 3.6.9](https://img.shields.io/badge/Python-3.6.9-light)
+![Airflow 1.10.10](https://img.shields.io/badge/Airflow-1.10.10-red)
+![GeoPandas 0.7](https://img.shields.io/badge/GeoPandas-0.7-purple)
+![Spark 2.4.5](https://img.shields.io/badge/Spark-2.4.5-orange)
+![PostGIS 2.4](https://img.shields.io/badge/PostGIS-2.4-darkblue)
+![Dash 1.12](https://img.shields.io/badge/Dash-1.12-blue)
 ![MIT License](https://img.shields.io/badge/license-MIT-lightgrey)
 # Where Cycle
 
 *Getting New Yorkers Back to Business, Safely*
 
-
+<!-- 1. [Summary](README.md#summary) -->
 ## Contents
 1. [Purpose](README.md#purpose)
 1. [Pipeline](README.md#pipeline)
-1. [Summary](README.md#summary)
-    - [Data](README.md#data)
-    - [Preparation](README.md#preparation)
+1. [Data](README.md#data)
+    <!-- - [Preparation](README.md#preparation)
     - [Spark Reduction](README.md#spark-reduction)
-    - [postGIS Tables](README.md#postgis-tables)
+    - [postGIS Tables](README.md#postgis-tables) -->
 1. [Setup](README.md#setup)
 1. [Directory Structure](README.md#directory-structure)
 1. [DAG Hierarchy](README.md#dag-hierarchy)
@@ -28,20 +31,26 @@ A cursory glance at some transit coverage in NYC makes it clear that, while Citi
 
 ## Pipeline
 ![Pipeline](https://github.com/josh-lang/where-cycle/blob/master/pipeline.png)
+![DAG](https://github.com/josh-lang/where-cycle/blob/master/dag.png)
 
-## Summary
-### Data
+<!-- ## Summary  -->
+## Data
  - Citibike Trip Histories: [S3 bucket](https://s3.console.aws.amazon.com/s3/buckets/tripdata), [documentation](https://www.citibikenyc.com/system-data)
  - NYC Taxi & Limousine Commission Trip Records: [S3 bucket](https://s3.console.aws.amazon.com/s3/buckets/nyc-tlc), [documentation](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page)
  - Yelp Business Search API: [documentation](https://www.yelp.com/developers/documentation/v3/business_search)
-### Preparation
-TODO
+<!-- ### Preparation
+ - Spark can't ingest zip files natively since Hadoop, which provides the underlying filesystem interface, does not support that compression codec, so Citibike's zipped files need to be 
 ### Spark Reduction
 TODO
 ### PostGIS Tables
-TODO
+TODO -->
 
 ## Setup
+The python dependencies can be installed with the following command:
+```
+pip install -r requirements.txt
+```
+
 This project was built using an Apache Spark 2.4.5 / Hadoop 2.7 binary downloaded from [spark.apache.org](https://spark.apache.org/downloads.html). It reads from AWS S3 and writes to PostgreSQL, so a driver from [jdbc.postgresql.org](https://jdbc.postgresql.org) should be placed in `spark/jars/` and some configuration should be added to `spark-defaults.conf`:
 | Property | Setting |
 | -------- | ------- |
@@ -56,9 +65,9 @@ This project was built using an Apache Spark 2.4.5 / Hadoop 2.7 binary downloade
 | spark.jars | /usr/local/spark/jars/postgresql-42.2.14.jar |
 | spark.jars.packages | com.amazonaws:aws-java-sdk:1.7.4,org.apache.hadoop:hadoop-aws:2.7.7 |
 
-The python dependencies can be installed with the following command:
+This project also depends on PostgreSQL's PostGIS extension, which can be installed with the `CREATE EXTENSION` command:
 ```
-pip install -r requirements.txt
+psql -d yourdatabase -c 'CREATE EXTENSION postgis;'
 ```
 
 ## Directory Structure
@@ -75,6 +84,7 @@ pip install -r requirements.txt
     │   └── where_cycle_dag.py
     ├── config/
     │   ├── database.py
+    │   ├── geometries.py
     │   ├── ref/
     │   │   ├── check_citibike_schema.py
     │   │   ├── check_taxi_schemas.py
@@ -83,38 +93,48 @@ pip install -r requirements.txt
     ├── dash/
     │   └── app.py
     ├── postGIS_tables/
-    │   ├── geometries/
+    │   ├── geo_joined/
     │   │   ├── citibike_stations.sql
-    │   │   └── past_taxi_endpoint_visits.sql
+    │   │   └── past_tlc_visits.sql
     │   ├── production/
-    │   │   ├── all_time_stats_production.sql
-    │   │   └── taxi_zones_production.sql
+    │   │   ├── all_time_stats.sql
+    │   │   └── taxi_zones.sql
     │   └── statistics/
-    │       ├── citibike_stats.sql
-    │       ├── taxi_endpoint_visits.sql
-    │       └── yelp_stats.sql
+    │       ├── citibike.sql
+    │       ├── tlc_visits.sql
+    │       └── yelp_businesses.sql
     ├── preparation/
     │   ├── extract.py
     │   ├── load.py
     │   └── transform.py
     └── spark_reduction/
-        ├── citibike_stations_visits.py
+        ├── driver.py
         ├── extract.py
-        ├── modern_taxi_visits.py
-        └── past_taxi_visits_staging.py
+        └── transform_and_load.py
 ```
 
 ## DAG Hierarchy
 ```
-<Task(PythonOperator): unzip_csvs>
 <Task(PythonOperator): get_taxi_zones>
     <Task(PythonOperator): clean_taxi_zones>
         <Task(PythonOperator): write_taxi_zones>
+            <Task(BashOperator): create_production_taxi_zones>
     <Task(PythonOperator): calculate_centroids>
         <Task(PythonOperator): get_businesses>
             <Task(PythonOperator): clean_businesses>
                 <Task(PythonOperator): write_businesses>
-<Task(BashOperator): start_spark_workers>
+                    <Task(BashOperator): create_statistics_yelp_businesses>
+                        <Task(BashOperator): create_production_all_time_stats>
+<Task(PythonOperator): unzip_csvs>
+    <Task(BashOperator): start_spark_workers>
+        <Task(BashOperator): submit_spark_driver>
+            <Task(BashOperator): stop_spark_workers>
+            <Task(BashOperator): create_geo_joined_citibike_stations>
+                <Task(BashOperator): create_statistics_citibike>
+                    <Task(BashOperator): create_production_all_time_stats>
+            <Task(BashOperator): create_geo_joined_past_tlc_visits>
+                <Task(BashOperator): create_statistics_tlc_visits>
+                    <Task(BashOperator): create_production_all_time_stats>
 ```
 
 ## License
