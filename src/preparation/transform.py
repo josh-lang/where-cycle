@@ -5,6 +5,22 @@ from shapely.geometry.multipolygon import MultiPolygon
 from shapely.geometry.polygon import Polygon
 
 
+def clean_taxi_zones(**kwargs):
+    '''Make geometry column consistent for writing to postgres'''
+    ti = kwargs['ti']
+    taxi_zones = ti.xcom_pull(task_ids = 'get_taxi_zones')
+
+    def homogenize(geometry):
+        '''
+        Convert any Polygon to a MultiPolygon
+        and then either to a WKTElement
+        '''
+        multi = MultiPolygon([geometry]) if type(geometry) == Polygon else geometry
+        return WKTElement(multi.wkt, srid = 4326)
+
+    taxi_zones['geometry'] = taxi_zones['geometry'].apply(homogenize)
+    return taxi_zones
+
 def calculate_centroids(**kwargs):
     '''Calculate centroids for each taxi zone and extract lat-lons'''
     ti = kwargs['ti']
@@ -63,19 +79,3 @@ def clean_businesses(**kwargs):
         axis = 1
     )
     return businesses_writable
-
-def clean_taxi_zones(**kwargs):
-    '''Make geometry column consistent for writing to postgres'''
-    ti = kwargs['ti']
-    taxi_zones = ti.xcom_pull(task_ids = 'get_taxi_zones')
-
-    def homogenize(geometry):
-        '''
-        Convert any Polygon to a MultiPolygon
-        and then either to a WKTElement
-        '''
-        multi = MultiPolygon([geometry]) if type(geometry) == Polygon else geometry
-        return WKTElement(multi.wkt, srid = 4326)
-
-    taxi_zones['geometry'] = taxi_zones['geometry'].apply(homogenize)
-    return taxi_zones
