@@ -1,3 +1,6 @@
+-- Aggregate Citibike visits by taxi zone
+-- and estimate monthly station additions with rolling maximum
+
 DROP TABLE IF EXISTS statistics.citibike;
 
 CREATE TABLE statistics.citibike AS

@@ -1,3 +1,5 @@
+-- Convert taxi zone geometries to GeoJSON for Dash
+
 DROP TABLE IF EXISTS production.taxi_zones;
 
 CREATE TABLE production.taxi_zones AS

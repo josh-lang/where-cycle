@@ -55,11 +55,26 @@ def get_past_tlc_trips():
     '''Parse TLC CSVs from before 2016-07, filtering for lat-lon columns'''
     past_df = spark.createDataFrame(data = [], schema = past_schema)
     past_pairs = [
-        ('s3a://nyc-tlc/trip\ data/green_tripdata_201[345]-*.csv', green_13_16_schema),
-        ('s3a://nyc-tlc/trip\ data/green_tripdata_2016-0[1-6].csv', green_13_16_schema),
-        ('s3a://nyc-tlc/trip\ data/yellow_tripdata_2009-*.csv', yellow_09_16_schema),
-        ('s3a://nyc-tlc/trip\ data/yellow_tripdata_201[0-5]-*.csv', yellow_09_16_schema),
-        ('s3a://nyc-tlc/trip\ data/yellow_tripdata_2016-0[1-6].csv', yellow_09_16_schema)
+        (
+            's3a://nyc-tlc/trip\ data/green_tripdata_201[345]-*.csv',
+            green_13_16_schema
+        ),
+        (
+            's3a://nyc-tlc/trip\ data/green_tripdata_2016-0[1-6].csv',
+            green_13_16_schema
+        ),
+        (
+            's3a://nyc-tlc/trip\ data/yellow_tripdata_2009-*.csv',
+            yellow_09_16_schema
+        ),
+        (
+            's3a://nyc-tlc/trip\ data/yellow_tripdata_201[0-5]-*.csv',
+            yellow_09_16_schema
+        ),
+        (
+            's3a://nyc-tlc/trip\ data/yellow_tripdata_2016-0[1-6].csv',
+            yellow_09_16_schema
+        )
     ]
     for path, schema in past_pairs:
         csv_df = parse_tlc(path, schema).select(
@@ -85,15 +100,42 @@ def get_modern_tlc_trips():
 
     modern_df = spark.createDataFrame(data = [], schema = modern_schema)
     modern_pairs = [
-        ('s3a://nyc-tlc/trip\ data/fhv_tripdata_201[79]-*.csv', fhv_17_19_schema),
-        ('s3a://nyc-tlc/trip\ data/fhv_tripdata_2018-*.csv', fhv_18_schema),
-        ('s3a://nyc-tlc/trip\ data/fhvhv_tripdata_*.csv', fhvhv_schema),
-        ('s3a://nyc-tlc/trip\ data/green_tripdata_2016-0[789].csv', green_16_19_schema),
-        ('s3a://nyc-tlc/trip\ data/green_tripdata_2016-1*.csv', green_16_19_schema),
-        ('s3a://nyc-tlc/trip\ data/green_tripdata_201[789]-*.csv', green_16_19_schema),
-        ('s3a://nyc-tlc/trip\ data/yellow_tripdata_2016-0[789].csv', yellow_16_19_schema),
-        ('s3a://nyc-tlc/trip\ data/yellow_tripdata_2016-1*.csv', yellow_16_19_schema),
-        ('s3a://nyc-tlc/trip\ data/yellow_tripdata_201[789]-*.csv', yellow_16_19_schema)
+        (
+            's3a://nyc-tlc/trip\ data/fhv_tripdata_201[79]-*.csv',
+            fhv_17_19_schema
+        ),
+        (
+            's3a://nyc-tlc/trip\ data/fhv_tripdata_2018-*.csv',
+            fhv_18_schema
+        ),
+        (
+            's3a://nyc-tlc/trip\ data/fhvhv_tripdata_*.csv',
+            fhvhv_schema
+        ),
+        (
+            's3a://nyc-tlc/trip\ data/green_tripdata_2016-0[789].csv',
+            green_16_19_schema
+        ),
+        (
+            's3a://nyc-tlc/trip\ data/green_tripdata_2016-1*.csv',
+            green_16_19_schema
+        ),
+        (
+            's3a://nyc-tlc/trip\ data/green_tripdata_201[789]-*.csv',
+            green_16_19_schema
+        ),
+        (
+            's3a://nyc-tlc/trip\ data/yellow_tripdata_2016-0[789].csv',
+            yellow_16_19_schema
+        ),
+        (
+            's3a://nyc-tlc/trip\ data/yellow_tripdata_2016-1*.csv',
+            yellow_16_19_schema)
+        ,
+        (
+            's3a://nyc-tlc/trip\ data/yellow_tripdata_201[789]-*.csv',
+            yellow_16_19_schema
+        )
     ]
     for path, schema in modern_pairs:
         csv_df = parse_tlc(path, schema).select(

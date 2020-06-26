@@ -1,3 +1,5 @@
+-- Join Citibike, TLC, and Yelp statistics to taxi zones for Dash
+
 DROP TABLE IF EXISTS production.all_time_stats;
 
 CREATE TABLE production.all_time_stats AS
@@ -5,7 +7,7 @@ CREATE TABLE production.all_time_stats AS
         v.zone_id,
         v.zone_name,
         v.borough,
-        v.taxi_visits,
+        v.tlc_visits,
         v.citibike_visits,
         v.citibike_stations,
         y.avg_rating AS yelp_avg_rating,

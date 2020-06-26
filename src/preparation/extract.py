@@ -11,7 +11,7 @@ import pandas as pd
 s3 = boto3.resource('s3')
 
 def get_taxi_zones():
-    '''Pull taxi zone shapfile and convert to EPSG 4326'''
+    '''Pull taxi zone shapfile and convert to WGS 84 (EPSG:4326)'''
     s3.meta.client.download_file(
         'nyc-tlc',
         'misc/taxi_zones.zip',
@@ -68,7 +68,7 @@ def get_businesses(**kwargs):
     return businesses
 
 def unzip_csvs():
-    '''Iterate over relevant zipped files, unzip, and upload to private s3'''
+    '''Iterate over relevant zipped files, unzip, and upload to private S3'''
     source = s3.Bucket('tripdata')
 
     for obj in source.objects.all():

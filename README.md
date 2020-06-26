@@ -4,50 +4,83 @@
 ![Spark 2.4.5](https://img.shields.io/badge/Spark-2.4.5-orange)
 ![PostGIS 2.4](https://img.shields.io/badge/PostGIS-2.4-darkblue)
 ![Dash 1.12](https://img.shields.io/badge/Dash-1.12-blue)
-![MIT License](https://img.shields.io/badge/license-MIT-lightgrey)
+![MIT License](https://img.shields.io/badge/License-MIT-lightgrey)
 # Where Cycle
 
 *Getting New Yorkers Back to Business, Safely*
 
-<!-- 1. [Summary](README.md#summary) -->
 ## Contents
 1. [Purpose](README.md#purpose)
 1. [Pipeline](README.md#pipeline)
-1. [Data](README.md#data)
-    <!-- - [Preparation](README.md#preparation)
+1. [Summary](README.md#summary)
+    - [Data](README.md#data)
+    - [Preparation](README.md#preparation)
     - [Spark Reduction](README.md#spark-reduction)
-    - [postGIS Tables](README.md#postgis-tables) -->
+    - [postGIS Tables](README.md#postgis-tables)
 1. [Setup](README.md#setup)
 1. [Directory Structure](README.md#directory-structure)
 1. [DAG Hierarchy](README.md#dag-hierarchy)
 1. [License](README.md#license)
 
 ## Purpose
-As health officials advised social distancing and businesses closed earlier this year, subway and bus ridership plummeted in many large cities including New York, which saw an almost 90% reduction by late April. Now, as cities are tentatively opening back up, people may be looking to return to their places of work and to support their favorite businesses, but they might be hesitant to utilize public transit, instead seeking open-air alternatives.
+As health officials advised social distancing and businesses closed earlier this year, subway and bus ridership plummeted in many large cities. New York saw an almost 90% reduction by late April. Now, as the city is tentatively opening back up, people may be looking to return to their places of work and to support their favorite businesses, but they might be hesitant to utilize public transit, instead seeking open-air alternatives.
 
 A cursory glance at some transit coverage in NYC makes it clear that, while Citibike is an awesome open-air solution, the available stations can’t immediately meet the needs of the outer boroughs: some expansion is required. **The goal of this pipeline is to determine which NYC taxi zones may be the best candidates for Citibike expansion by aggregating historical taxi & for-hire vehicle trips, Citibike trips & station density, and Yelp business statistics.**
 
 *This project was developed by Josh Lang as part of his data engineering fellowship with Insight Data Science in the summer of 2020.*
 
 ## Pipeline
-![Pipeline](https://github.com/josh-lang/where-cycle/blob/master/pipeline.png)
+![Pipeline](https://github.com/josh-lang/where-cycle/blob/master/pipeline.png) <br/>
 ![DAG](https://github.com/josh-lang/where-cycle/blob/master/dag.png)
 
-<!-- ## Summary  -->
-## Data
+## Summary
+If you'd prefer to jump right in and start clicking into the functions from that DAG above, then the file that produced it is [here](https://github.com/josh-lang/where-cycle/blob/master/src/airflow/where_cycle_dag.py). Since you can't navigate directly to everything from there, you may also find a glance at the [directory structure](README.md#directory-structure) below handy.
+
+### Data
  - Citibike Trip Histories: [S3 bucket](https://s3.console.aws.amazon.com/s3/buckets/tripdata), [documentation](https://www.citibikenyc.com/system-data)
  - NYC Taxi & Limousine Commission Trip Records: [S3 bucket](https://s3.console.aws.amazon.com/s3/buckets/nyc-tlc), [documentation](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page)
  - Yelp Business Search API: [documentation](https://www.yelp.com/developers/documentation/v3/business_search)
-<!-- ### Preparation
- - Spark can't ingest zip files natively since Hadoop, which provides the underlying filesystem interface, does not support that compression codec, so Citibike's zipped files need to be 
+
+### Preparation
+ - In order to index everything by taxi zone, NYC-TLC's shapefile needs to be pulled down from S3, processed, and saved to PostgreSQL
+     - Coordinate reference system is converted from NAD83 to WGS84
+     - Each polygon is replaced with its equivalent multipolygon
+     - All geometries are converted to well-known text
+ - Centroids are then calculated for each taxi zone and used to query Yelp's API, requesting the 50 nearest businesses. These are cleaned and written as well
+     - Invalid results and duplicates are removed
+     - Coordinates are unnested and combined into point geometries
+     - Like with taxi zones, geometries are converted to well-known text
+ - Finally, Spark can't ingest zip files natively since Hadoop, which provides its underlying filesystem interface, does not support that compression codec. So, Citibike's zipped files need to be pulled out of S3, unzipped, and sent back to another S3 bucket before batch processing
+     - Python's `io.BytesIO` class reads S3's *bytes-like objects* and makes this a quick streaming process
+
 ### Spark Reduction
-TODO
+ - Spark can read csv files directly via the s3a connector for Hadoop, and multiple URIs can be specified with globbing
+     - Citibike's trip data is consistent, so parsing all of it requires only one path and one schema definition
+     - TLC data is messier with 15 distinct csv headers over the corpus, but because this project isn't concerned with any columns that appear after trip dates and endpoint locations, 10 truncated schemas are sufficient for pulling everything in correctly
+     - TLC trips before 2016-07 use coordinates for pickup and dropoff locations, while trips after 2016-06 use taxi zone IDs
+     - Relevant columns are selected from csvs, and then they're all unioned together into 3 TempViews: Citibike trips, past TLC trips, and modern TLC trips
+ - To aggregate visits by taxi zone, trip beginnings and endings need to be combined into endpoints and grouped by location. 4 tables are created in PostgreSQL:
+     - Coordinates for unique Citibike stations within the taxi zone map's extent are pulled out separately from visit aggregation
+     - Citibike visits are then aggragated by station ID
+     - Past TLC visits are aggregated by coordinates within taxi zone extent rounded to 3 decimal places — neighborhood resolution
+     - Modern TLC visits are aggregated simply by taxi zone ID
+
 ### PostGIS Tables
-TODO -->
+ - All tables so far have been written to the *staging* schema in PostgreSQL. Now, that everything's there, some final processing with the PostGIS extension can be done
+ - *geo_joined* schema
+     - Citibike station coordinates are matched to taxi zone polygons to create a join table for Citibike visits
+     - Past TLC visits are aggregated by the taxi zone their coordinates are within
+ - *statistics* schema
+     - Citibike stations and trips are aggregated by taxi zone using join table
+     - Past TLC visits are unioned and summed with modern TLC visits using taxi zone IDs
+     - Yelp business ratings and reviews are aggregated by the taxi zone their coordinates are within
+ - *production* schema
+     - Taxi zone geometries are converted to GeoJSON for Dash to plot on a choropleth map
+     - Citibike, TLC, and Yelp statistics are joined to taxi zone dimensions for Dash to define toggleable scales for the choropleth map
 
 ## Setup
-The python dependencies can be installed with the following command:
-```
+Python dependencies can be installed with the following command:
+```sh
 pip install -r requirements.txt
 ```
 
@@ -66,15 +99,16 @@ This project was built using an Apache Spark 2.4.5 / Hadoop 2.7 binary downloade
 | spark.jars.packages | com.amazonaws:aws-java-sdk:1.7.4,org.apache.hadoop:hadoop-aws:2.7.7 |
 
 This project also depends on PostgreSQL's PostGIS extension, which can be installed with the `CREATE EXTENSION` command:
-```
+```sh
 psql -d yourdatabase -c 'CREATE EXTENSION postgis;'
 ```
 
 ## Directory Structure
-```
+```sh
 .
 ├── LICENSE
 ├── README.md
+├── dag.png
 ├── pipeline.png
 ├── requirements.txt
 └── src/
@@ -87,8 +121,9 @@ psql -d yourdatabase -c 'CREATE EXTENSION postgis;'
     │   ├── geometries.py
     │   ├── ref/
     │   │   ├── check_citibike_schema.py
-    │   │   ├── check_taxi_schemas.py
-    │   │   └── taxi_schemas.txt
+    │   │   ├── check_tlc_schemas.py
+    │   │   ├── get_geometries.sql
+    │   │   └── tlc_schemas.txt
     │   └── schemas.py
     ├── dash/
     │   └── app.py
@@ -114,7 +149,7 @@ psql -d yourdatabase -c 'CREATE EXTENSION postgis;'
 ```
 
 ## DAG Hierarchy
-```
+```sh
 <Task(PythonOperator): get_taxi_zones>
     <Task(PythonOperator): clean_taxi_zones>
         <Task(PythonOperator): write_taxi_zones>

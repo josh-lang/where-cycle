@@ -1,3 +1,5 @@
+-- Aggregate Yelp business ratings and reviews by taxi zone
+
 DROP TABLE IF EXISTS statistics.yelp_businesses;
 
 CREATE TABLE statistics.yelp_businesses AS
@@ -9,5 +11,5 @@ CREATE TABLE statistics.yelp_businesses AS
     FROM
         staging.taxi_zones AS z
         JOIN staging.yelp_businesses AS y
-            ON ST_WITHIN(y.geometry, z.geometry)
+            ON ST_Within(y.geometry, z.geometry)
     GROUP BY 1;

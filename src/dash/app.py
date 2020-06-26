@@ -12,9 +12,10 @@ from config.geometries import TAXI_ZONE_CENTROID_LAT, TAXI_ZONE_CENTROID_LON
 
 token = os.environ['MAPBOX_ACCESS_TOKEN']
 
-zones = pd.read_sql(
-    sql = 'taxi_zones_production',
-    con = py_engine
+zones = pd.read_sql_table(
+    table_name = 'taxi_zones',
+    con = py_engine,
+    schema = 'production'
 )
 
 json_zones = {'type': 'FeatureCollection', 'features': []}
@@ -26,13 +27,14 @@ for _, row in zones.iterrows():
     }
     json_zones['features'].append(feature)
 
-stats = pd.read_sql(
-    sql = 'all_time_stats_production',
-    con = py_engine
+stats = pd.read_sql_table(
+    table_name = 'all_time_stats',
+    con = py_engine,
+    schema = 'production'
 )
 
 cols = [
-    'taxi_visits',
+    'tlc_visits',
     'citibike_visits',
     'citibike_stations',
     'yelp_avg_rating',
@@ -49,7 +51,6 @@ for col in cols:
             z = stats[col].tolist(),
             text = stats['zone_name'] + ', ' + stats['borough'],
             colorbar = dict(thickness=20, ticklen=3),
-            # colorscale = 'Hot',
             visible = False
         )
     )
@@ -73,69 +74,65 @@ fig.update_layout(
 )
 
 fig.update_layout(
-    updatemenus = [
-        dict(
-            buttons = list([
-                dict(
-                    args = [
-                        'visible',
-                        [True, False, False, False, False, False]
-                    ],
-                    label = 'Taxi Visits',
-                    method = 'restyle'
-                ),
-                dict(
-                    args = [
-                        'visible',
-                        [False, True, False, False, False, False]
-                    ],
-                    label = 'Citibike Visits',
-                    method = 'restyle'
-                ),
-                dict(
-                    args = [
-                        'visible',
-                        [False, False, True, False, False, False]
-                    ],
-                    label = 'Citibike Stations',
-                    method = 'restyle'
-                ),
-                dict(
-                    args = [
-                        'visible',
-                        [False, False, False, True, False, False]
-                    ],
-                    label = 'Yelp Average Rating',
-                    method = 'restyle'
-                ),
-                dict(
-                    args = [
-                        'visible',
-                        [False, False, False, False, True, False]
-                    ],
-                    label = 'Yelp Reviews',
-                    method = 'restyle'
-                ),
-                dict(
-                    args = [
-                        'visible',
-                        [False, False, False, False, False, True]
-                    ],
-                    label = 'Yelp Weighted Reviews',
-                    method = 'restyle'
-                )
-            ]),
-        )
-    ]
+    updatemenus = [dict(
+        buttons = list([
+            dict(
+                args = [
+                    'visible',
+                    [True, False, False, False, False, False]
+                ],
+                label = 'Taxi Visits',
+                method = 'restyle'
+            ),
+            dict(
+                args = [
+                    'visible',
+                    [False, True, False, False, False, False]
+                ],
+                label = 'Citibike Visits',
+                method = 'restyle'
+            ),
+            dict(
+                args = [
+                    'visible',
+                    [False, False, True, False, False, False]
+                ],
+                label = 'Citibike Stations',
+                method = 'restyle'
+            ),
+            dict(
+                args = [
+                    'visible',
+                    [False, False, False, True, False, False]
+                ],
+                label = 'Yelp Average Rating',
+                method = 'restyle'
+            ),
+            dict(
+                args = [
+                    'visible',
+                    [False, False, False, False, True, False]
+                ],
+                label = 'Yelp Reviews',
+                method = 'restyle'
+            ),
+            dict(
+                args = [
+                    'visible',
+                    [False, False, False, False, False, True]
+                ],
+                label = 'Yelp Weighted Reviews',
+                method = 'restyle'
+            )
+        ]),
+    )]
 )
 
 stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets = stylesheets)
 
-app.layout = html.Div([
-    dcc.Graph(figure = fig)
-])
+app.layout = html.Div([dcc.Graph(figure = fig)])
 
 if __name__ == '__main__':
     app.run_server(debug=True)

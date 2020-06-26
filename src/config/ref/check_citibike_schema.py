@@ -6,7 +6,7 @@ s3 = boto3.resource('s3')
 bucket = s3.Bucket('jlang-20b-de-ny')
 
 spark = SparkSession.builder \
-    .appName('citibike') \
+    .appName('check-citibike-schema') \
     .getOrCreate()
 
 for obj in bucket.objects.all():

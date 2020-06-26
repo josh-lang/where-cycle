@@ -1,3 +1,6 @@
+-- Combine past TLC visits with modern TLC visits
+-- and aggregate by taxi zone ID
+
 DROP TABLE IF EXISTS statistics.tlc_visits;
 
 CREATE TABLE statistics.tlc_visits AS

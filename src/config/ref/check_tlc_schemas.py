@@ -6,7 +6,7 @@ s3 = boto3.resource('s3')
 nyc_tlc = s3.Bucket('nyc-tlc')
 
 spark = SparkSession.builder \
-    .appName('check_taxi_schemas') \
+    .appName('check_tlc_schemas') \
     .getOrCreate()
 
 for obj in nyc_tlc.objects.all():

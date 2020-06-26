@@ -1,3 +1,5 @@
+-- Create join table for taxi zones and Citibike stations
+
 DROP TABLE IF EXISTS geo_joined.citibike_stations;
 
 CREATE TABLE geo_joined.citibike_stations AS

@@ -1,3 +1,5 @@
+-- Aggregate past TLC visits by the taxi zone their coordinates are within
+
 DROP TABLE IF EXISTS geo_joined.past_tlc_visits;
 
 CREATE TABLE geo_joined.past_tlc_visits AS
