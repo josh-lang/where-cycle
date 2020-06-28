@@ -32,6 +32,7 @@ def get_citibike_trips():
         'end_longitude'
     )
     citibike_df.createOrReplaceTempView('citibike')
+    spark.catalog.cacheTable('citibike')
 
 def parse_tlc(path, schema):
     '''Parse TLC CSVs, assuming trip month from filename'''
@@ -86,6 +87,7 @@ def get_past_tlc_trips():
         )
         past_df = past_df.union(csv_df)
     past_df.createOrReplaceTempView('past')
+    spark.catalog.cacheTable('past')
 
 def get_modern_tlc_trips():
     '''Parse TLC CSVs from after 2016-06, filtering for taxi zone ID columns'''
@@ -97,6 +99,7 @@ def get_modern_tlc_trips():
         'locationID'
     )
     fhv_15_16_df.createOrReplaceTempView('fhv_15_16')
+    spark.catalog.cacheTable('fhv_15_16')
 
     modern_df = spark.createDataFrame(data = [], schema = modern_schema)
     modern_pairs = [
@@ -145,3 +148,4 @@ def get_modern_tlc_trips():
         )
         modern_df = modern_df.union(csv_df)
     modern_df.createOrReplaceTempView('modern')
+    spark.catalog.cacheTable('modern')

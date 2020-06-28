@@ -132,7 +132,10 @@ stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets = stylesheets)
 
-app.layout = html.Div([dcc.Graph(figure = fig)])
+app.layout = html.Div([
+    dcc.Location(id = 'url', pathname = '/where-cycle', refresh = False),
+    dcc.Graph(figure = fig)
+])
 
 if __name__ == '__main__':
     app.run_server(debug=True)

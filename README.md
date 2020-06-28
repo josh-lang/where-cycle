@@ -17,6 +17,7 @@
     - [Preparation](README.md#preparation)
     - [Spark Reduction](README.md#spark-reduction)
     - [postGIS Tables](README.md#postgis-tables)
+1. [Spark Optimization](README.md#spark-optimization)
 1. [Setup](README.md#setup)
 1. [Directory Structure](README.md#directory-structure)
 1. [DAG Hierarchy](README.md#dag-hierarchy)
@@ -50,7 +51,7 @@ If you'd prefer to jump right in and start clicking into the functions from that
      - Invalid results and duplicates are removed
      - Coordinates are unnested and combined into point geometries
      - Like with taxi zones, geometries are converted to well-known text
- - Finally, Spark can't ingest zip files natively since Hadoop, which provides its underlying filesystem interface, does not support that compression codec. So, Citibike's zipped files need to be pulled out of S3, unzipped, and sent back to another S3 bucket before batch processing
+ - Spark can't ingest zip files natively since Hadoop, which provides its underlying filesystem interface, does not support that compression codec. So, Citibike's zipped files need to be pulled out of S3, unzipped, and sent back to another S3 bucket before batch processing
      - Python's `io.BytesIO` class reads S3's *bytes-like objects* and makes this a quick streaming process
 
 ### Spark Reduction
@@ -58,12 +59,12 @@ If you'd prefer to jump right in and start clicking into the functions from that
      - Citibike's trip data is consistent, so parsing all of it requires only one path and one schema definition
      - TLC data is messier with 15 distinct csv headers over the corpus, but because this project isn't concerned with any columns that appear after trip dates and endpoint locations, 10 truncated schemas are sufficient for pulling everything in correctly
      - TLC trips before 2016-07 use coordinates for pickup and dropoff locations, while trips after 2016-06 use taxi zone IDs
-     - Relevant columns are selected from csvs, and then they're all unioned together into 3 TempViews: Citibike trips, past TLC trips, and modern TLC trips
+     - Relevant columns are selected from csvs, and then they're all unioned together into 4 cached tables: Citibike trips, past TLC trips, modern TLC trips, and a small table for just the earliest for-hire vehicle trips
  - To aggregate visits by taxi zone, trip beginnings and endings need to be combined into endpoints and grouped by location. 4 tables are created in PostgreSQL:
      - Coordinates for unique Citibike stations within the taxi zone map's extent are pulled out separately from visit aggregation
      - Citibike visits are then aggragated by station ID
      - Past TLC visits are aggregated by coordinates within taxi zone extent rounded to 3 decimal places — neighborhood resolution
-     - Modern TLC visits are aggregated simply by taxi zone ID
+     - Modern TLC visits and those early for-hire vehicle visits are aggregated simply by taxi zone ID
 
 ### PostGIS Tables
  - All tables so far have been written to the *staging* schema in PostgreSQL. Now, that everything's there, some final processing with the PostGIS extension can be done
@@ -77,6 +78,19 @@ If you'd prefer to jump right in and start clicking into the functions from that
  - *production* schema
      - Taxi zone geometries are converted to GeoJSON for Dash to plot on a choropleth map
      - Citibike, TLC, and Yelp statistics are joined to taxi zone dimensions for Dash to define toggleable scales for the choropleth map
+
+## Spark Optimization
+I tested a handful of methods and configuration changes trying to make the Spark piece of the pipeline run more efficiently. First, since I had already defined each TLC schema while taking my initial stab at ingestion, I wanted to see whether those explicit definitions were, in fact, significantly faster than just using Spark's `inferSchema` option. Defining schemas before reading files was faster (as expected), but it only reduced total runtime by **~2.1%**.
+
+The most dramatic improvement came with caching each table of source CSVs before running the Spark SQL queries that transform them. This increased my total runtime savings to **~32.9%**!
+
+After that, I found that lowering the number of shuffle partitions so that it matched the number of cores in my small cluster and doubling the maximum bytes in cached storage batches and in each partition could make things even faster, but only by so much. Changing these settings in my `spark-defaults.conf` file brought total runtime reduction to **~36.6%**:
+| Property | Setting |
+| -------- | ------- |
+| spark.sql.files.maxPartitionBytes | 268435456 |
+| spark.sql.inMemoryColumnarStorage.batchSize | 20000 |
+| spark.sql.inMemoryColumnarStorage.compressed | true |
+| spark.sql.shuffle.partitions | 12 |
 
 ## Setup
 Python dependencies can be installed with the following command:
@@ -145,7 +159,8 @@ psql -d yourdatabase -c 'CREATE EXTENSION postgis;'
     └── spark_reduction/
         ├── driver.py
         ├── extract.py
-        └── transform_and_load.py
+        ├── load.py
+        └── transform.py
 ```
 
 ## DAG Hierarchy

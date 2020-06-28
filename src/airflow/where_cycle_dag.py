@@ -18,9 +18,9 @@ psql_str = 'psql -h $PSQL_HOST -p $PSQL_PORT -U $PSQL_USER -d ' + \
 defaults = {
     'owner': 'airflow',
     'start_date': datetime(2020, 6, 21),
-    'depends_on_past': False
-    # 'retries': 2,
-    # 'retry_delay': timedelta(minutes=5)
+    'depends_on_past': False,
+    'retries': 2,
+    'retry_delay': timedelta(minutes=5)
 }
 
 with DAG(

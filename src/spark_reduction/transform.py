@@ -1,5 +1,4 @@
 from pyspark.sql import SparkSession
-from config.database import jdbc_props, jdbc_url
 from config.geometries import \
     TAXI_ZONE_LAT_MIN, TAXI_ZONE_LAT_MAX, \
     TAXI_ZONE_LON_MIN, TAXI_ZONE_LON_MAX
@@ -9,9 +8,9 @@ spark = SparkSession.builder \
     .appName('where-cycle') \
     .getOrCreate()
 
-def citibike_stations():
+def distill_citibike_stations():
     '''Create list of unique Citibike stations across all trip endpoints'''
-    stations = spark.sql(f'''
+    stations_df = spark.sql(f'''
         SELECT
             start_id AS station_id,
             start_latitude AS latitude,
@@ -38,17 +37,11 @@ def citibike_stations():
                 {TAXI_ZONE_LON_MIN} AND {TAXI_ZONE_LON_MAX}
         GROUP BY 1, 2, 3'''.translate({ord(c): ' ' for c in '\n\t'})
     )
+    return stations_df
 
-    stations.write.jdbc(
-    url = jdbc_url,
-    table = 'staging.citibike_stations',
-    mode = 'overwrite',
-    properties = jdbc_props
-)
-
-def citibike_visits():
+def aggregate_citibike_visits():
     '''Convert Citibike trips to visits and sum by station_id'''
-    visits = spark.sql('''
+    visits_df = spark.sql('''
         SELECT
             month,
             station_id,
@@ -70,21 +63,15 @@ def citibike_visits():
         )
         GROUP BY 1, 2
     ''')
+    return visits_df
 
-    visits.write.jdbc(
-        url = jdbc_url,
-        table = 'staging.citibike_visits',
-        mode = 'overwrite',
-        properties = jdbc_props
-    )
-
-def past_tlc_visits():
+def aggregate_past_tlc_visits():
     '''
     Convert past TLC trips to visits,
     round lat-lon precision to street level,
     and sum by lat-lon
     '''
-    visits = spark.sql(f'''
+    past_df = spark.sql(f'''
         SELECT
             month,
             longitude,
@@ -121,21 +108,15 @@ def past_tlc_visits():
         )
         GROUP BY 1, 2, 3'''.translate({ord(c): ' ' for c in '\n\t'})
     )
+    return past_df
 
-    visits.write.jdbc(
-        url = jdbc_url,
-        table = 'staging.past_tlc_visits',
-        mode = 'overwrite',
-        properties = jdbc_props
-    )
-
-def modern_tlc_visits():
+def aggregate_modern_tlc_visits():
     '''
     Convert modern TLC trips to visits,
     ignoring unknown taxi zone IDs,
     and sum by taxi zone ID
     '''
-    modern = spark.sql('''
+    modern_df = spark.sql('''
         SELECT
             month,
             zone_id,
@@ -167,10 +148,4 @@ def modern_tlc_visits():
         )
         GROUP BY 1, 2
     ''')
-
-    modern.write.jdbc(
-        url = jdbc_url,
-        table = 'staging.modern_tlc_visits',
-        mode = 'overwrite',
-        properties = jdbc_props
-    )
+    return modern_df
