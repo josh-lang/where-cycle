@@ -33,7 +33,7 @@ stats = pd.read_sql_table(
     schema = 'production'
 )
 
-cols = [
+columns = [
     'tlc_visits',
     'citibike_visits',
     'citibike_stations',
@@ -41,28 +41,60 @@ cols = [
     'yelp_sum_reviews',
     'yelp_weighted_sum_reviews'
 ]
-map_views = []
 
-for col in cols:
+map_views = []
+bar_charts = []
+
+for column in columns:
     map_views.append(
         go.Choroplethmapbox(
             geojson = json_zones,
             locations = stats['zone_id'].tolist(),
-            z = stats[col].tolist(),
+            z = stats[column].tolist(),
             text = stats['zone_name'] + ', ' + stats['borough'],
-            colorbar = dict(thickness=20, ticklen=3),
-            visible = False
+            visible = False,
+            subplot = 'mapbox',
+            hovertemplate = '%{text}<br />' +
+                            '%{z}<br />' +
+                            '<extra></extra>'
+        )
+    )
+
+    top = stats.sort_values([column], ascending = False).head(15)
+    bar_charts.append(
+        go.Bar(
+            x = top[column],
+            y = top['zone_name'] + ', ' + top['borough'],
+            text = top['zone_name'] + ', ' + top['borough'],
+            textposition = 'inside',
+            hovertemplate = '%{text}<br />' +
+                            '%{x}<br />' +
+                            '<extra></extra>',
+            xaxis = 'x',
+            yaxis = 'y',
+            marker = dict(color = top[column]),
+            visible = False,
+            name = '',
+            orientation = 'h'
         )
     )
 
 map_views[0]['visible'] = True
+bar_charts[0]['visible'] = True
 
-fig = go.Figure(data = map_views)
+fig = go.Figure(data = map_views + bar_charts)
 
 fig.update_layout(
+    title = dict(
+        text = 'Where Cycle',
+        font = {'size': 36},
+        x = 0.5,
+        xanchor = 'center'
+    ),
     autosize = True,
     height = 700,
     mapbox = dict(
+        domain = {'x': [0.25, 1], 'y': [0, 1]},
         accesstoken = token,
         style = 'dark',
         center = dict(
@@ -70,11 +102,28 @@ fig.update_layout(
             lat = TAXI_ZONE_CENTROID_LAT
         ),
         zoom = 9.35
-    )
+    ),
+    xaxis = {
+        'domain': [0, 0.25],
+        'anchor': 'x',
+        'showticklabels': True,
+        'showgrid': True
+    },
+    yaxis = {
+        'domain': [0, 1],
+        'anchor': 'y',
+        'autorange': 'reversed',
+        'visible': False
+    },
+    margin = dict(l = 0, r = 0, t = 70, b = 50)
 )
 
 fig.update_layout(
     updatemenus = [dict(
+        x = 0,
+        y = 1,
+        xanchor = 'left',
+        yanchor = 'bottom',
         buttons = list([
             dict(
                 args = [
@@ -134,7 +183,14 @@ app = dash.Dash(__name__, external_stylesheets = stylesheets)
 
 app.layout = html.Div([
     dcc.Location(id = 'url', pathname = '/where-cycle', refresh = False),
-    dcc.Graph(figure = fig)
+    dcc.Graph(figure = fig),
+    html.Div([
+        'Read more about this project on ',
+        html.A(
+            ['Github'],
+            href = 'https://github.com/josh-lang/where-cycle'
+        )
+    ])
 ])
 
 if __name__ == '__main__':

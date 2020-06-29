@@ -20,7 +20,6 @@
 1. [Spark Optimization](README.md#spark-optimization)
 1. [Setup](README.md#setup)
 1. [Directory Structure](README.md#directory-structure)
-1. [DAG Hierarchy](README.md#dag-hierarchy)
 1. [License](README.md#license)
 
 ## Purpose
@@ -161,30 +160,6 @@ psql -d yourdatabase -c 'CREATE EXTENSION postgis;'
         ├── extract.py
         ├── load.py
         └── transform.py
-```
-
-## DAG Hierarchy
-```sh
-<Task(PythonOperator): get_taxi_zones>
-    <Task(PythonOperator): clean_taxi_zones>
-        <Task(PythonOperator): write_taxi_zones>
-            <Task(BashOperator): create_production_taxi_zones>
-    <Task(PythonOperator): calculate_centroids>
-        <Task(PythonOperator): get_businesses>
-            <Task(PythonOperator): clean_businesses>
-                <Task(PythonOperator): write_businesses>
-                    <Task(BashOperator): create_statistics_yelp_businesses>
-                        <Task(BashOperator): create_production_all_time_stats>
-<Task(PythonOperator): unzip_csvs>
-    <Task(BashOperator): start_spark_workers>
-        <Task(BashOperator): submit_spark_driver>
-            <Task(BashOperator): stop_spark_workers>
-            <Task(BashOperator): create_geo_joined_citibike_stations>
-                <Task(BashOperator): create_statistics_citibike>
-                    <Task(BashOperator): create_production_all_time_stats>
-            <Task(BashOperator): create_geo_joined_past_tlc_visits>
-                <Task(BashOperator): create_statistics_tlc_visits>
-                    <Task(BashOperator): create_production_all_time_stats>
 ```
 
 ## License
