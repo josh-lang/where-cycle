@@ -3,14 +3,14 @@ import os
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import flask
 import pandas as pd
 import plotly
 import plotly.graph_objects as go
 from config.database import py_engine
-from config.geometries import TAXI_ZONE_CENTROID_LAT, TAXI_ZONE_CENTROID_LON
+from config.geometries import \
+    TAXI_ZONE_CENTROID_LAT, TAXI_ZONE_CENTROID_LON
 
-
-token = os.environ['MAPBOX_ACCESS_TOKEN']
 
 zones = pd.read_sql_table(
     table_name = 'taxi_zones',
@@ -37,8 +37,8 @@ columns = [
     'tlc_visits',
     'citibike_visits',
     'citibike_stations',
-    'yelp_avg_rating',
-    'yelp_sum_reviews',
+    # 'yelp_avg_rating',
+    # 'yelp_sum_reviews',
     'yelp_weighted_sum_reviews'
 ]
 
@@ -72,7 +72,7 @@ for column in columns:
                             '<extra></extra>',
             xaxis = 'x',
             yaxis = 'y',
-            marker = dict(color = top[column]),
+            marker = dict(color = 'blue'),
             visible = False,
             name = '',
             orientation = 'h'
@@ -87,15 +87,15 @@ fig = go.Figure(data = map_views + bar_charts)
 fig.update_layout(
     title = dict(
         text = 'Where Cycle',
-        font = {'size': 36},
+        font = dict(size = 36),
         x = 0.5,
         xanchor = 'center'
     ),
     autosize = True,
     height = 700,
     mapbox = dict(
-        domain = {'x': [0.25, 1], 'y': [0, 1]},
-        accesstoken = token,
+        domain = dict(x = [0.25, 1], y = [0, 1]),
+        accesstoken = os.environ['MAPBOX_ACCESS_TOKEN'],
         style = 'dark',
         center = dict(
             lon = TAXI_ZONE_CENTROID_LON,
@@ -103,19 +103,21 @@ fig.update_layout(
         ),
         zoom = 9.35
     ),
-    xaxis = {
-        'domain': [0, 0.25],
-        'anchor': 'x',
-        'showticklabels': True,
-        'showgrid': True
-    },
-    yaxis = {
-        'domain': [0, 1],
-        'anchor': 'y',
-        'autorange': 'reversed',
-        'visible': False
-    },
-    margin = dict(l = 0, r = 0, t = 70, b = 50)
+    xaxis = dict(
+        domain = [0, 0.25],
+        anchor = 'x',
+        showticklabels = True,
+        showgrid = True
+    ),
+    yaxis = dict(
+        domain = [0, 1],
+        anchor = 'y',
+        autorange = 'reversed',
+        visible = False
+    ),
+    margin = dict(l = 0, r = 0, t = 70, b = 50),
+    paper_bgcolor='black',
+    plot_bgcolor='black'
 )
 
 fig.update_layout(
@@ -128,7 +130,7 @@ fig.update_layout(
             dict(
                 args = [
                     'visible',
-                    [True, False, False, False, False, False]
+                    [True, False, False, False] # , False, False]
                 ],
                 label = 'Taxi Visits',
                 method = 'restyle'
@@ -136,7 +138,7 @@ fig.update_layout(
             dict(
                 args = [
                     'visible',
-                    [False, True, False, False, False, False]
+                    [False, True, False, False] # , False, False]
                 ],
                 label = 'Citibike Visits',
                 method = 'restyle'
@@ -144,45 +146,54 @@ fig.update_layout(
             dict(
                 args = [
                     'visible',
-                    [False, False, True, False, False, False]
+                    [False, False, True, False] # , False, False]
                 ],
                 label = 'Citibike Stations',
                 method = 'restyle'
             ),
+            # dict(
+            #     args = [
+            #         'visible',
+            #         [False, False, False, True, False, False]
+            #     ],
+            #     label = 'Yelp Average Rating',
+            #     method = 'restyle'
+            # ),
+            # dict(
+            #     args = [
+            #         'visible',
+            #         [False, False, False, False, True, False]
+            #     ],
+            #     label = 'Yelp Reviews',
+            #     method = 'restyle'
+            # ),
             dict(
                 args = [
                     'visible',
-                    [False, False, False, True, False, False]
+                    [False, False, False, True] # , False, True]
                 ],
-                label = 'Yelp Average Rating',
-                method = 'restyle'
-            ),
-            dict(
-                args = [
-                    'visible',
-                    [False, False, False, False, True, False]
-                ],
-                label = 'Yelp Reviews',
-                method = 'restyle'
-            ),
-            dict(
-                args = [
-                    'visible',
-                    [False, False, False, False, False, True]
-                ],
-                label = 'Yelp Weighted Reviews',
+                label = 'Yelp Stars (weighted review count)',
                 method = 'restyle'
             )
         ]),
     )]
 )
 
+server = flask.Flask(__name__)
 stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = dash.Dash(__name__, external_stylesheets = stylesheets)
+app = dash.Dash(
+    __name__,
+    external_stylesheets = stylesheets,
+    server = server
+)
 
 app.layout = html.Div([
-    dcc.Location(id = 'url', pathname = '/where-cycle', refresh = False),
+    dcc.Location(
+        id = 'url',
+        pathname = '/where-cycle',
+        refresh = False
+    ),
     dcc.Graph(figure = fig),
     html.Div([
         'Read more about this project on ',
@@ -193,5 +204,11 @@ app.layout = html.Div([
     ])
 ])
 
+app.title = 'Where Cycle'
+
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(
+        debug = False,
+        dev_tools_props_check = False,
+        dev_tools_ui = False
+    )
