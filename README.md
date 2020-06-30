@@ -42,7 +42,7 @@ If you'd prefer to jump right in and start clicking into the functions from that
  - Yelp Business Search API: [documentation](https://www.yelp.com/developers/documentation/v3/business_search)
 
 ### Preparation
- - In order to index everything by taxi zone, NYC-TLC's shapefile needs to be pulled down from S3, processed, and saved to PostgreSQL
+ - In order to index everything by taxi zone, NYC TLC's shapefile needs to be pulled down from S3, processed, and saved to PostgreSQL
      - Coordinate reference system is converted from NAD83 to WGS84
      - Each polygon is replaced with its equivalent multipolygon
      - All geometries are converted to well-known text
@@ -139,7 +139,9 @@ psql -d yourdatabase -c 'CREATE EXTENSION postgis;'
     │   │   └── tlc_schemas.txt
     │   └── schemas.py
     ├── dash/
-    │   └── app.py
+    │   ├── app.py
+    │   └── assets/
+    │       └── background.css
     ├── postGIS_tables/
     │   ├── geo_joined/
     │   │   ├── citibike_stations.sql
