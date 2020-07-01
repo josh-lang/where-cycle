@@ -16,7 +16,8 @@
     - [Data](README.md#data)
     - [Preparation](README.md#preparation)
     - [Spark Reduction](README.md#spark-reduction)
-    - [postGIS Tables](README.md#postgis-tables)
+    - [PostGIS Tables](README.md#postgis-tables)
+    - [Dash & Airflow](README.md#dash-and-airflow)
 1. [Spark Optimization](README.md#spark-optimization)
 1. [Setup](README.md#setup)
 1. [Directory Structure](README.md#directory-structure)
@@ -25,7 +26,7 @@
 ## Purpose
 As health officials advised social distancing and businesses closed earlier this year, subway and bus ridership plummeted in many large cities. New York saw an almost 90% reduction by late April. Now, as the city is tentatively opening back up, people may be looking to return to their places of work and to support their favorite businesses, but they might be hesitant to utilize public transit, instead seeking open-air alternatives.
 
-A cursory glance at some transit coverage in NYC makes it clear that, while Citibike is an awesome open-air solution, the available stations can’t immediately meet the needs of the outer boroughs: some expansion is required. **The goal of this pipeline is to determine which NYC taxi zones may be the best candidates for Citibike expansion by aggregating historical taxi & for-hire vehicle trips, Citibike trips & station density, and Yelp business statistics.**
+A cursory glance at some transit coverage in NYC makes it clear that, while Citibike is an awesome open-air solution, the available stations can’t immediately meet the needs of the outer boroughs: some expansion is required. **The goal of this pipeline is to synthesize data that may help city planners and Citibike analysts determine which areas could be ideal for Citibike expansion. As an initial step toward that end, it aggregates historical taxi & for-hire vehicle trips, Citibike trips & station density, and business review statistics by taxi zone.**
 
 *This project was developed by Josh Lang as part of his data engineering fellowship with Insight Data Science in the summer of 2020.*
 
@@ -50,15 +51,18 @@ If you'd prefer to jump right in and start clicking into the functions from that
      - Invalid results and duplicates are removed
      - Coordinates are unnested and combined into point geometries
      - Like with taxi zones, geometries are converted to well-known text
- - Spark can't ingest zip files natively since Hadoop, which provides its underlying filesystem interface, does not support that compression codec. So, Citibike's zipped files need to be pulled out of S3, unzipped, and sent back to another S3 bucket before batch processing
+ - Citibike's zipped files need to be pulled out of S3, unzipped, and sent back to another S3 bucket before batch processing since Spark can't ingest zip files natively
+     - This is because Hadoop, which provides its underlying filesystem interface, does not support that compression codec
      - Python's `io.BytesIO` class reads S3's *bytes-like objects* and makes this a quick streaming process
 
 ### Spark Reduction
  - Spark can read csv files directly via the s3a connector for Hadoop, and multiple URIs can be specified with globbing
      - Citibike's trip data is consistent, so parsing all of it requires only one path and one schema definition
-     - TLC data is messier with 15 distinct csv headers over the corpus, but because this project isn't concerned with any columns that appear after trip dates and endpoint locations, 10 truncated schemas are sufficient for pulling everything in correctly
-     - TLC trips before 2016-07 use coordinates for pickup and dropoff locations, while trips after 2016-06 use taxi zone IDs
-     - Relevant columns are selected from csvs, and then they're all unioned together into 4 cached tables: Citibike trips, past TLC trips, modern TLC trips, and a small table for just the earliest for-hire vehicle trips
+         - That schema can be truncated because this project isn't concerned with any columns that appear after trip dates and endpoint locations
+     - TLC data is messier with 15 distinct csv headers over the corpus, but 10 truncated schemas are sufficient for pulling everything in correctly
+         - TLC trips before 2016-07 use coordinates for pickup and dropoff locations, while trips after 2016-06 use taxi zone IDs
+         - TLC's timestamps aren't always valid, so schemas are simplified further by not including those. Dates are instead assumed from csv filenames, which represent each month of trips
+     - Relevant columns are selected from csvs, and then they're unioned together into 4 cached tables: Citibike trips, past TLC trips, modern TLC trips, and a small table for just the earliest for-hire vehicle trips
  - To aggregate visits by taxi zone, trip beginnings and endings need to be combined into endpoints and grouped by location. 4 tables are created in PostgreSQL:
      - Coordinates for unique Citibike stations within the taxi zone map's extent are pulled out separately from visit aggregation
      - Citibike visits are then aggragated by station ID
@@ -75,8 +79,19 @@ If you'd prefer to jump right in and start clicking into the functions from that
      - Past TLC visits are unioned and summed with modern TLC visits using taxi zone IDs
      - Yelp business ratings and reviews are aggregated by the taxi zone their coordinates are within
  - *production* schema
-     - Taxi zone geometries are converted to GeoJSON for Dash to plot on a choropleth map
-     - Citibike, TLC, and Yelp statistics are joined to taxi zone dimensions for Dash to define toggleable scales for the choropleth map
+     - Taxi zone geometries are converted to GeoJSON for Dash to plot on choropleth maps
+     - Citibike, TLC, and Yelp statistics are joined to taxi zone dimensions for Dash to define toggleable scales
+
+### Dash and Airflow
+ - A rudimentary dashboard built with Dash lives at [dats.work/where-cycle](http://dats.work/where-cycle)
+     - GeoJSON geometries from PostGIS need to be wrapped as a GeoJSON Feature Collection inside of the Dash app to be plotted on choropleth maps
+     - Statistics from PostGIS define the choropleth map scales and are also used to create a supplementary bar chart of the top 15 taxi zones for whichever metric is selected
+ - Airflow adds some fault tolerance and runs pipeline on a regular basis to keep data up-to-date
+     - Dependencies between tasks prevent things from running out of order or unnecessarily when an upstream task has failed
+     - Pipeline runs every week so that Yelp has enough time to update meaningfully and so that Citibike and TLC updates can be captured with relatively minimal delay
+         - Both Citibike and TLC batch their trip data by month, but the date they update their S3 buckets isn't consistent
+         - Yelp's data is queried directly from their API and may return updated or simply different results each time
+     - Startup and shutdown of the standalone Spark cluster is automated within the pipeline to save money
 
 ## Spark Optimization
 I tested a handful of methods and configuration changes trying to make the Spark piece of the pipeline run more efficiently. First, since I had already defined each TLC schema while taking my initial stab at ingestion, I wanted to see whether those explicit definitions were, in fact, significantly faster than just using Spark's `inferSchema` option. Defining schemas before reading files was faster (as expected), but it only reduced total runtime by **~2.1%**.
