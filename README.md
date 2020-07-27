@@ -1,5 +1,5 @@
 ![Python 3.6.9](https://img.shields.io/badge/Python-3.6.9-light)
-![Airflow 1.10.10](https://img.shields.io/badge/Airflow-1.10.10-red)
+![Airflow 1.10.11](https://img.shields.io/badge/Airflow-1.10.11-red)
 ![GeoPandas 0.7](https://img.shields.io/badge/GeoPandas-0.7-purple)
 ![Spark 2.4.5](https://img.shields.io/badge/Spark-2.4.5-orange)
 ![PostGIS 2.4](https://img.shields.io/badge/PostGIS-2.4-darkblue)
