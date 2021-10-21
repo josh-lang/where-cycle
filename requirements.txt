@@ -3,7 +3,7 @@ apache-airflow==2.1.2
 apispec==1.3.3
 argcomplete==1.12.0
 attrs==19.3.0
-Babel==2.8.0
+Babel==2.9.1
 backcall==0.1.0
 bleach==3.3.0
 boto3==1.13.23
