@@ -47,7 +47,7 @@ Flask-SQLAlchemy==2.4.4
 flask-swagger==0.2.13
 Flask-WTF==0.14.3
 funcsigs==1.0.2
-future==0.18.2
+future==0.18.3
 GeoAlchemy2==0.8.3
 geopandas==0.7.0
 graphviz==0.14.1
