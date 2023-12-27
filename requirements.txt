@@ -36,7 +36,7 @@ findspark==1.4.1
 Fiona==1.8.13.post1
 Flask==2.3.2
 Flask-Admin==1.5.4
-Flask-AppBuilder==4.3.0
+Flask-AppBuilder==4.3.2
 Flask-Babel==1.0.0
 Flask-Caching==1.11.0
 Flask-Compress==1.5.0
