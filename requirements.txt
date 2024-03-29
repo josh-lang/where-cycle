@@ -20,8 +20,7 @@ colorama==0.4.3
 colorlog==4.0.2
 configparser==3.5.3
 croniter==0.3.34
-dash==2.15.0
-dash-core-components==1.10.0
+dash-core-components==2.0.0
 dash-html-components==1.0.3
 dash-renderer==1.4.1
 dash-table==4.7.0
